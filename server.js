@@ -23,9 +23,11 @@ app.get('/', (_req, res) => {
 
 const players = new Map();
 const votes = new Map();
+const mapVotes = new Map();
 const zombies = new Map();
 const playerSettings = new Map();
 let zombieCounter = 0;
+let currentMap = 'hydro';
 let round = {
   phase: 'voting',
   mode: null,
@@ -52,6 +54,7 @@ function publicPlayer(player) {
 
 function publicRound() {
   const counts = { battle: 0, coop: 0 };
+  const maps = { hydro: 0, arcade: 0 };
   const voters = [];
   for (const vote of votes.values()) {
     if (counts[vote] !== undefined) counts[vote] += 1;
@@ -64,6 +67,9 @@ function publicRound() {
       vote,
     });
   }
+  for (const vote of mapVotes.values()) {
+    if (maps[vote] !== undefined) maps[vote] += 1;
+  }
   return {
     phase: round.phase,
     mode: round.mode,
@@ -71,6 +77,8 @@ function publicRound() {
     wave: round.wave,
     votes: counts,
     voters,
+    maps,
+    map: currentMap,
   };
 }
 
@@ -178,6 +186,14 @@ io.on('connection', (socket) => {
     io.emit('roundState', publicRound());
   });
 
+  socket.on('voteMap', (mapName) => {
+    if (mapName !== 'hydro' && mapName !== 'arcade') return;
+    mapVotes.set(socket.id, mapName);
+    currentMap = getWinningMap();
+    io.emit('roundState', publicRound());
+    io.emit('mapState', currentMap);
+  });
+
   socket.on('hit', ({ targetId, damage, weapon, headshot } = {}) => {
     const attacker = players.get(socket.id);
     const target = players.get(targetId);
@@ -251,6 +267,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     players.delete(socket.id);
     votes.delete(socket.id);
+    mapVotes.delete(socket.id);
     io.emit('playerLeft', socket.id);
     io.emit('playerCount', players.size);
     io.emit('roundState', publicRound());
@@ -313,6 +330,7 @@ function startVoting() {
 function startRound(mode) {
   zombies.clear();
   votes.clear();
+  currentMap = getWinningMap();
   round = {
     phase: 'playing',
     mode,
@@ -320,6 +338,7 @@ function startRound(mode) {
     wave: 0,
   };
   io.emit('roundState', publicRound());
+  io.emit('mapState', currentMap);
   if (mode === 'coop') spawnWave();
 }
 
@@ -333,16 +352,30 @@ function getWinningVote() {
   return coop > battle ? 'coop' : 'battle';
 }
 
+function getWinningMap() {
+  let hydro = 0;
+  let arcade = 0;
+  for (const vote of mapVotes.values()) {
+    if (vote === 'hydro') hydro += 1;
+    if (vote === 'arcade') arcade += 1;
+  }
+  return arcade > hydro ? 'arcade' : 'hydro';
+}
+
 function spawnWave() {
   if (round.mode !== 'coop') return;
+  if (round.wave >= 6) {
+    startVoting();
+    return;
+  }
   round.wave += 1;
-  const count = Math.min(8 + round.wave * 3, 38);
+  const count = Math.min(5 + round.wave * 2, 18);
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2 + Math.random() * 0.6;
     const distance = 62 + Math.random() * 48;
     const zombie = {
       id: `z${++zombieCounter}`,
-      health: 70 + round.wave * 12,
+      health: 58 + round.wave * 10,
       position: { x: Math.cos(angle) * distance, y: 0, z: Math.sin(angle) * distance },
       velocity: { x: 0, y: 0, z: 0 },
       attackAt: 0,
@@ -369,7 +402,7 @@ function updateZombies(delta) {
     }
     if (!nearest) continue;
 
-    const speed = 3.3 + Math.min(round.wave * 0.28, 2.2);
+    const speed = 2.35 + Math.min(round.wave * 0.22, 1.4);
     const dx = nearest.position.x - zombie.position.x;
     const dz = nearest.position.z - zombie.position.z;
     const length = Math.max(0.001, Math.hypot(dx, dz));

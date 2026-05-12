@@ -18,6 +18,26 @@
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
+    body {
+      scrollbar-color: rgba(255, 226, 179, 0.58) rgba(255, 255, 255, 0.08);
+      scrollbar-width: thin;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(#ffe2b3, #9fd7ff);
+      border-radius: 999px;
+      border: 2px solid rgba(14, 20, 30, 0.7);
+    }
+
     canvas {
       display: block;
     }
@@ -242,6 +262,8 @@
 
     #settingsBox {
       width: min(520px, calc(100vw - 48px));
+      max-height: min(760px, calc(100vh - 40px));
+      overflow-y: auto;
       padding: 20px 22px;
       border-radius: 18px;
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -436,6 +458,8 @@
 
     #loginBox {
       width: min(420px, calc(100vw - 32px));
+      max-height: min(680px, calc(100vh - 40px));
+      overflow-y: auto;
       padding: 18px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 8px;
@@ -472,6 +496,35 @@
       font: inherit;
       font-weight: 800;
       cursor: pointer;
+    }
+
+    .mapPick {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .mapPick button {
+      min-height: 56px;
+      height: auto;
+      text-align: left;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #e8edf3;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .mapPick button.active {
+      border-color: rgba(255, 226, 179, 0.86);
+      background: rgba(255, 226, 179, 0.16);
+    }
+
+    .mapPick small {
+      display: block;
+      margin-top: 3px;
+      color: rgba(255, 255, 255, 0.62);
+      line-height: 1.25;
     }
 
     .slot {
@@ -661,6 +714,10 @@
       <div id="loginBox">
         <h2>Enter Callsign</h2>
         <input id="usernameInput" maxlength="18" placeholder="Username">
+        <div class="mapPick">
+          <button class="mapButton active" data-map="hydro" type="button">Hydro Dream<small>Flooded service yard, bridge, warm mist.</small></button>
+          <button class="mapButton" data-map="arcade" type="button">Afterhours Mall<small>Empty neon concourse, tiled platforms.</small></button>
+        </div>
         <button id="joinButton">Join Match</button>
       </div>
     </div>
@@ -714,6 +771,7 @@
     const playerTargets = new Map();
     const playerNames = new Map();
     const zombies = new Map();
+    const arenaRoot = new THREE.Group();
     const remoteShotEffects = [];
     const grenades = [];
     const explosions = [];
@@ -723,6 +781,8 @@
     const hitMarkers = [];
     const keys = new Set();
     let currentRound = null;
+    let activeMap = 'hydro';
+    scene.add(arenaRoot);
     let worldTime = 0;
     const localPlayer = {
       id: null,
@@ -870,6 +930,7 @@
       settingsButton: document.getElementById('settingsButton'),
       settingsOverlay: document.getElementById('settingsOverlay'),
       settingsClose: document.getElementById('settingsClose'),
+      mapButtons: Array.from(document.querySelectorAll('.mapButton')),
     };
 
     const performanceStats = {
@@ -1071,6 +1132,7 @@
         playerNames.set(player.id, player.name);
         if (player.id !== id) addOrUpdateRemotePlayer(player);
       }
+      if (round && round.map) setMap(round.map);
       updateRoundUi(round);
       updateZombies(initialZombies || []);
       ui.playersOnline.textContent = players.length;
@@ -1096,6 +1158,7 @@
     socket.on('remoteShot', spawnRemoteShot);
     socket.on('grenade', spawnRemoteGrenade);
     socket.on('roundState', updateRoundUi);
+    socket.on('mapState', setMap);
     socket.on('zombies', updateZombies);
     socket.on('zombieKilled', ({ id, by, score }) => {
       removeZombie(id);
@@ -1164,6 +1227,12 @@
         ui.voteButtons.forEach((b) => b.classList.toggle('active', b === button));
       });
     });
+    ui.mapButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setMap(button.dataset.map);
+        socket.emit('voteMap', button.dataset.map);
+      });
+    });
     ui.joinButton.addEventListener('click', joinWithName);
     ui.usernameInput.addEventListener('keydown', (event) => {
       if (event.code === 'Enter') joinWithName();
@@ -1217,18 +1286,45 @@
       scene.add(sun);
     }
 
+    function addArena(object) {
+      arenaRoot.add(object);
+    }
+
+    function clearArena() {
+      while (arenaRoot.children.length) {
+        const object = arenaRoot.children.pop();
+        object.traverse((child) => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material && !Array.isArray(child.material)) child.material.dispose();
+        });
+      }
+      colliders.length = 0;
+      terrainSurfaces.length = 0;
+      interactiveProps.length = 0;
+    }
+
+    function setMap(mapName) {
+      activeMap = mapName === 'arcade' ? 'arcade' : 'hydro';
+      ui.mapButtons.forEach((button) => button.classList.toggle('active', button.dataset.map === activeMap));
+      clearArena();
+      createArena();
+    }
+
     function createArena() {
+      const arcade = activeMap === 'arcade';
+      scene.background = new THREE.Color(arcade ? 0xd7c9d8 : 0x9bb5bd);
+      scene.fog = new THREE.Fog(arcade ? 0xd7c9d8 : 0x9bb5bd, 38, 165);
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(260, 260, 1, 1),
-        new THREE.MeshStandardMaterial({ color: 0x58665d, roughness: 0.96 })
+        new THREE.MeshStandardMaterial({ color: arcade ? 0xd5c8bd : 0x58665d, roughness: 0.96 })
       );
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
-      scene.add(floor);
+      addArena(floor);
 
-      const grid = new THREE.GridHelper(260, 52, 0xded8be, 0x79886d);
+      const grid = new THREE.GridHelper(260, 52, arcade ? 0xf4e8dc : 0xded8be, arcade ? 0xc9b8d2 : 0x79886d);
       grid.position.y = 0.012;
-      scene.add(grid);
+      addArena(grid);
 
       const runway = new THREE.Mesh(
         new THREE.PlaneGeometry(42, 180),
@@ -1238,14 +1334,58 @@
       runway.rotation.z = Math.PI / 2;
       runway.position.y = 0.018;
       runway.receiveShadow = true;
-      scene.add(runway);
+      addArena(runway);
 
-      addWater();
+      if (arcade) addArcadeDreamscape();
+      else addWater();
       addMountains();
       addBridge();
       addObstacles();
       addInteractiveDetails();
       addBoundaryWalls();
+    }
+
+    function addArcadeDreamscape() {
+      const tileMat = new THREE.MeshStandardMaterial({ color: 0xe8ddd0, roughness: 0.9 });
+      const neonMat = new THREE.MeshStandardMaterial({ color: 0x9cc8ff, emissive: 0x315b80, emissiveIntensity: 0.5, roughness: 0.55 });
+      const fountainMat = new THREE.MeshStandardMaterial({ color: 0x9bd7df, transparent: true, opacity: 0.62, roughness: 0.18 });
+
+      const fountain = new THREE.Mesh(new THREE.CircleGeometry(18, 64), fountainMat);
+      fountain.rotation.x = -Math.PI / 2;
+      fountain.position.set(0, 0.04, 0);
+      addArena(fountain);
+
+      for (let i = 0; i < 18; i++) {
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 18 + Math.random() * 28), neonMat);
+        strip.position.set((Math.random() - 0.5) * 170, 0.06, (Math.random() - 0.5) * 170);
+        strip.rotation.y = Math.random() * Math.PI;
+        addArena(strip);
+      }
+
+      for (let i = 0; i < 20; i++) {
+        const pedestal = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.8 + Math.random() * 1.2, 3.2), tileMat);
+        pedestal.position.set((Math.random() - 0.5) * 150, pedestal.geometry.parameters.height / 2, (Math.random() - 0.5) * 150);
+        pedestal.rotation.y = Math.random() * Math.PI;
+        pedestal.castShadow = true;
+        pedestal.receiveShadow = true;
+        addArena(pedestal);
+        addCollider(pedestal, 0.05);
+      }
+
+      for (const [x, z] of [[-58, -58], [58, -58], [-58, 58], [58, 58], [0, -82], [0, 82]]) {
+        const arch = new THREE.Group();
+        const mat = new THREE.MeshStandardMaterial({ color: 0xdfd1c3, roughness: 0.88 });
+        const left = new THREE.Mesh(new THREE.BoxGeometry(1.2, 7, 1.2), mat);
+        const right = new THREE.Mesh(new THREE.BoxGeometry(1.2, 7, 1.2), mat);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(9, 1.2, 1.2), mat);
+        left.position.set(-4, 3.5, 0);
+        right.position.set(4, 3.5, 0);
+        top.position.set(0, 7, 0);
+        arch.add(left, right, top);
+        arch.position.set(x, 0, z);
+        arch.lookAt(0, 0, 0);
+        addArena(arch);
+      }
     }
 
     function addWater() {
@@ -1261,7 +1401,7 @@
       );
       water.rotation.x = -Math.PI / 2;
       water.position.set(36, 0.035, -32);
-      scene.add(water);
+      addArena(water);
 
       const reedsMat = new THREE.MeshStandardMaterial({ color: 0x30492f, roughness: 0.92 });
       for (let i = 0; i < 34; i++) {
@@ -1270,7 +1410,7 @@
         const reed = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.1 + Math.random() * 0.8, 0.12), reedsMat);
         reed.position.set(36 + Math.cos(angle) * radius, reed.geometry.parameters.height / 2, -32 + Math.sin(angle) * radius);
         reed.rotation.z = (Math.random() - 0.5) * 0.35;
-        scene.add(reed);
+        addArena(reed);
       }
     }
 
@@ -1286,7 +1426,7 @@
         mountain.rotation.y = Math.random() * Math.PI;
         mountain.castShadow = true;
         mountain.receiveShadow = true;
-        scene.add(mountain);
+        addArena(mountain);
         addConeTerrain(mountain, mountain.geometry.parameters.radius, mountain.geometry.parameters.height);
       }
     }
@@ -1299,7 +1439,7 @@
       deck.position.set(36, 1.35, -32);
       deck.castShadow = true;
       deck.receiveShadow = true;
-      scene.add(deck);
+      addArena(deck);
       addCollider(deck, 0.04, { standable: false });
 
       const leftRamp = new THREE.Mesh(new THREE.BoxGeometry(16, 0.38, 8.5), rampMat);
@@ -1307,14 +1447,14 @@
       leftRamp.rotation.z = -0.16;
       leftRamp.castShadow = true;
       leftRamp.receiveShadow = true;
-      scene.add(leftRamp);
+      addArena(leftRamp);
 
       const rightRamp = new THREE.Mesh(new THREE.BoxGeometry(16, 0.38, 8.5), rampMat);
       rightRamp.position.set(68, 0.68, -32);
       rightRamp.rotation.z = 0.16;
       rightRamp.castShadow = true;
       rightRamp.receiveShadow = true;
-      scene.add(rightRamp);
+      addArena(rightRamp);
 
       terrainSurfaces.push({ type: 'bridge', x1: 12, x2: 60, z1: -36.25, z2: -27.75, height: 1.62 });
       terrainSurfaces.push({ type: 'ramp', x1: -4, x2: 12, z1: -36.25, z2: -27.75, h1: 0, h2: 1.62 });
@@ -1326,7 +1466,7 @@
           post.position.set(x, 1.5, z);
           post.castShadow = true;
           post.receiveShadow = true;
-          scene.add(post);
+          addArena(post);
           addCollider(post, 0.05);
         }
       }
@@ -1335,7 +1475,7 @@
         const rail = new THREE.Mesh(new THREE.BoxGeometry(52, 0.22, 0.22), postMat);
         rail.position.set(36, 2.28, z);
         rail.castShadow = true;
-        scene.add(rail);
+        addArena(rail);
       }
     }
 
@@ -1355,7 +1495,7 @@
         obstacle.rotation.y = Math.random() * Math.PI;
         obstacle.castShadow = true;
         obstacle.receiveShadow = true;
-        scene.add(obstacle);
+        addArena(obstacle);
         addCollider(obstacle, 0.12);
       }
     }
@@ -1372,7 +1512,7 @@
         crate.rotation.y = Math.random() * Math.PI;
         crate.castShadow = true;
         crate.receiveShadow = true;
-        scene.add(crate);
+        addArena(crate);
         addCollider(crate, 0.06);
       }
 
@@ -1381,7 +1521,7 @@
         barrel.position.set((Math.random() - 0.5) * 150, 0.68, (Math.random() - 0.5) * 150);
         barrel.castShadow = true;
         barrel.receiveShadow = true;
-        scene.add(barrel);
+        addArena(barrel);
         addCollider(barrel, 0.04);
       }
 
@@ -1389,16 +1529,16 @@
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 5.2, 12), lampMat);
         pole.position.set(x, 2.6, z);
         pole.castShadow = true;
-        scene.add(pole);
+        addArena(pole);
         addCollider(pole, 0.02);
 
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 10), glowMat);
         head.position.set(x, 5.25, z);
-        scene.add(head);
+        addArena(head);
         const light = new THREE.PointLight(0xffc979, 1.35, 24, 1.8);
         light.position.copy(head.position);
         light.castShadow = true;
-        scene.add(light);
+        addArena(light);
       }
 
       const towerMat = new THREE.MeshStandardMaterial({ color: 0x5d5548, roughness: 0.88 });
@@ -1406,7 +1546,7 @@
       platform.position.set(-54, 5.1, -18);
       platform.castShadow = true;
       platform.receiveShadow = true;
-      scene.add(platform);
+      addArena(platform);
       addCollider(platform, 0.05);
       terrainSurfaces.push({ type: 'bridge', x1: -58, x2: -50, z1: -22, z2: -14, height: 5.36 });
 
@@ -1415,7 +1555,7 @@
       ramp.rotation.z = -0.34;
       ramp.castShadow = true;
       ramp.receiveShadow = true;
-      scene.add(ramp);
+      addArena(ramp);
       terrainSurfaces.push({ type: 'ramp', x1: -34, x2: -52, z1: -19.6, z2: -16.4, h1: 0, h2: 5.36 });
 
       for (const x of [-57, -51]) {
@@ -1423,7 +1563,7 @@
           const leg = new THREE.Mesh(new THREE.BoxGeometry(0.42, 5.1, 0.42), towerMat);
           leg.position.set(x, 2.55, z);
           leg.castShadow = true;
-          scene.add(leg);
+          addArena(leg);
           addCollider(leg, 0.03);
         }
       }
@@ -1435,7 +1575,7 @@
         core.position.y = 0.42;
         pickup.add(base, core);
         pickup.position.set(x, 0.15, z);
-        scene.add(pickup);
+        addArena(pickup);
         interactiveProps.push(pickup);
       }
     }
@@ -1453,7 +1593,7 @@
         wall.position.set(x, y, z);
         wall.castShadow = true;
         wall.receiveShadow = true;
-        scene.add(wall);
+        addArena(wall);
         addCollider(wall, 0.05);
       }
     }
@@ -1524,6 +1664,32 @@
       knifeGuard.rotation.copy(knifeHandle.rotation);
       const knifeBlade = box(0.075, 0.03, 0.62, 0.03, 0.02, -0.76, new THREE.MeshStandardMaterial({ color: 0xbfc8cc, roughness: 0.28, metalness: 0.76 }));
       knifeBlade.rotation.copy(knifeHandle.rotation);
+      const knifeGroup = new THREE.Group();
+      const knifeGrip = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.055, 0.28, 8, 14),
+        polymer
+      );
+      knifeGrip.rotation.x = Math.PI / 2;
+      knifeGrip.position.set(0.08, -0.1, -0.3);
+      const knifePommel = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 10), brass);
+      knifePommel.position.set(0.08, -0.1, -0.1);
+      const knifeCross = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.04, 0.055), brass);
+      knifeCross.position.set(0.08, -0.075, -0.47);
+      const bladeShape = new THREE.Shape();
+      bladeShape.moveTo(-0.055, 0);
+      bladeShape.lineTo(0.055, 0);
+      bladeShape.lineTo(0.026, -0.62);
+      bladeShape.lineTo(0, -0.77);
+      bladeShape.lineTo(-0.026, -0.62);
+      bladeShape.lineTo(-0.055, 0);
+      const knifeBladeMesh = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(bladeShape, { depth: 0.018, bevelEnabled: true, bevelSize: 0.008, bevelThickness: 0.006 }),
+        new THREE.MeshStandardMaterial({ color: 0xc9d0d2, roughness: 0.24, metalness: 0.82 })
+      );
+      knifeBladeMesh.rotation.x = Math.PI / 2;
+      knifeBladeMesh.position.set(0.08, -0.072, -0.48);
+      knifeGroup.add(knifeGrip, knifePommel, knifeCross, knifeBladeMesh);
+      knifeGroup.rotation.set(-0.24, -0.18, 0.62);
 
       const flash = new THREE.PointLight(0xffc46a, 0, 8);
       flash.position.set(0, 0.04, -1.64);
@@ -1534,7 +1700,7 @@
       cone.rotation.x = -Math.PI / 2;
       cone.position.copy(flash.position);
 
-      group.add(receiver, upper, handguard, stock, grip, magazine, rail, triggerGuard, barrel, muzzleBrake, optic, opticGlass, sideModule, leftSleeve, rightSleeve, leftHand, rightHand, knifeHandle, knifeGuard, knifeBlade, flash, cone);
+      group.add(receiver, upper, handguard, stock, grip, magazine, rail, triggerGuard, barrel, muzzleBrake, optic, opticGlass, sideModule, leftSleeve, rightSleeve, leftHand, rightHand, knifeHandle, knifeGuard, knifeBlade, knifeGroup, flash, cone);
       group.traverse((object) => {
         if (object.isMesh) object.castShadow = true;
       });
@@ -1543,7 +1709,7 @@
         group,
         flash,
         cone,
-        parts: { receiver, upper, handguard, stock, grip, magazine, rail, triggerGuard, barrel, muzzleBrake, optic, opticGlass, sideModule, leftSleeve, rightSleeve, leftHand, rightHand, knifeHandle, knifeGuard, knifeBlade },
+        parts: { receiver, upper, handguard, stock, grip, magazine, rail, triggerGuard, barrel, muzzleBrake, optic, opticGlass, sideModule, leftSleeve, rightSleeve, leftHand, rightHand, knifeHandle, knifeGuard, knifeBlade, knifeGroup },
       };
 
       function box(w, h, d, x, y, z, material) {
@@ -1675,13 +1841,13 @@
         : 'No votes yet';
       const remaining = Math.max(0, Math.ceil(((round.endsAt || Date.now()) - Date.now()) / 1000));
       if (round.phase === 'voting') {
-        ui.roundTitle.textContent = `Round Vote - ${remaining}s`;
+        ui.roundTitle.textContent = `Round Vote - ${remaining}s - ${activeMap === 'arcade' ? 'Afterhours Mall' : 'Hydro Dream'}`;
         ui.roundStatus.textContent = `Battle ${battleVotes} - Co-Op ${coopVotes}`;
       } else if (round.mode === 'coop') {
-        ui.roundTitle.textContent = 'Co-Op Wave';
+        ui.roundTitle.textContent = `Co-Op Wave - ${activeMap === 'arcade' ? 'Afterhours Mall' : 'Hydro Dream'}`;
         ui.roundStatus.textContent = `Wave ${round.wave} - Zombies ${zombies.size}`;
       } else {
-        ui.roundTitle.textContent = `Battle - ${remaining}s`;
+        ui.roundTitle.textContent = `Battle - ${remaining}s - ${activeMap === 'arcade' ? 'Afterhours Mall' : 'Hydro Dream'}`;
         ui.roundStatus.textContent = 'Free-for-all';
       }
     }
@@ -1771,9 +1937,10 @@
       for (const part of [p.receiver, p.upper, p.handguard, p.stock, p.grip, p.magazine, p.rail, p.triggerGuard, p.barrel, p.muzzleBrake, p.optic, p.opticGlass, p.sideModule]) {
         part.visible = !knife;
       }
-      p.knifeHandle.visible = knife;
-      p.knifeGuard.visible = knife;
-      p.knifeBlade.visible = knife;
+      p.knifeHandle.visible = false;
+      p.knifeGuard.visible = false;
+      p.knifeBlade.visible = false;
+      p.knifeGroup.visible = knife;
       p.leftSleeve.visible = true;
       p.rightSleeve.visible = true;
       p.leftHand.visible = true;
@@ -2207,7 +2374,10 @@
         tempVector.set(target.position.x, target.position.y, target.position.z);
         rig.root.position.lerp(tempVector, Math.min(1, delta * 10));
         const speed = target.velocity ? Math.hypot(target.velocity.x, target.velocity.z) : 0;
-        if (speed > 0.1) rig.root.rotation.y = Math.atan2(target.velocity.x, target.velocity.z);
+        if (speed > 0.1) {
+          const desiredYaw = Math.atan2(-target.velocity.x, -target.velocity.z);
+          rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, desiredYaw, Math.min(1, delta * 8));
+        }
         const stride = worldTime * (5.5 + speed * 0.7) + id.length;
         rig.leftLeg.rotation.x = Math.sin(stride) * 0.38;
         rig.rightLeg.rotation.x = -Math.sin(stride) * 0.38;
