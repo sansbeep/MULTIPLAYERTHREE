@@ -1,17 +1,20 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Multiplayer Three.js FPS</title>
   <style>
-    html, body {
+    html,
+    body {
       width: 100%;
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: #0c1118;
-      color: #f7f2e8;
+      background: radial-gradient(circle at 16% 10%, rgba(139, 214, 255, 0.08), transparent 22%),
+        linear-gradient(145deg, #081119 0%, #0f1826 42%, #121c2f 100%);
+      color: #e8edf3;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -70,11 +73,223 @@
       left: 18px;
       top: 16px;
       display: grid;
-      gap: 8px;
-      min-width: 220px;
+      gap: 10px;
+      min-width: 240px;
+      padding: 14px 16px;
       font-size: 14px;
-      line-height: 1.3;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+      line-height: 1.4;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      background: rgba(14, 20, 30, 0.6);
+      backdrop-filter: blur(18px);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 18px 50px rgba(2, 5, 12, 0.45);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+
+    #performancePanel {
+      position: absolute;
+      left: 50%;
+      top: 12px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 7px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      background: rgba(10, 14, 20, 0.5);
+      backdrop-filter: blur(16px);
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 12px;
+      pointer-events: none;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+      z-index: 3;
+    }
+
+    #performancePanel.hidden {
+      display: none;
+    }
+
+    #performancePanel div {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    #performancePanel strong {
+      color: #fff;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    .barTrack {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .barFill {
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f05d60, #ffc56f);
+      transition: width 160ms ease, background 240ms ease;
+    }
+
+    .settingRow {
+      display: grid;
+      gap: 10px;
+    }
+
+    .settingRow label {
+      display: grid;
+      gap: 4px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .settingRow input[type="range"] {
+      width: 100%;
+    }
+
+    .settingRow input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .settingSection {
+      display: grid;
+      gap: 10px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .settingSection h3 {
+      margin: 0;
+      font-size: 14px;
+      color: #f5f8ff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .keybindRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .keybindRow:last-child {
+      border-bottom: none;
+    }
+
+    .keybindButton {
+      min-width: 96px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.07);
+      color: #eef5ff;
+      cursor: pointer;
+      font: inherit;
+      text-align: center;
+    }
+
+    #settingsButton {
+      position: absolute;
+      left: 18px;
+      top: 320px;
+      padding: 12px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #eef5ff;
+      font: 600 12px/1 "Inter", ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    #settingsButton:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.26);
+    }
+
+    #settingsOverlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(2, 4, 8, 0.75);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+      z-index: 5;
+    }
+
+    #settingsOverlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #settingsBox {
+      width: min(520px, calc(100vw - 48px));
+      padding: 20px 22px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(10, 16, 24, 0.92);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    #settingsHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    #settingsHeader h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    #settingsClose {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    #settingsContent {
+      display: grid;
+      gap: 10px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+    }
+
+    #settingsContent p {
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .subtle {
+      color: rgba(255, 255, 255, 0.6);
     }
 
     #weaponBar {
@@ -152,7 +367,7 @@
 
     #voteNames {
       min-height: 18px;
-      color: rgba(255,255,255,0.68);
+      color: rgba(255, 255, 255, 0.68);
       font-size: 12px;
       line-height: 1.35;
     }
@@ -183,7 +398,7 @@
       right: 18px;
       bottom: 24px;
       padding: 8px 10px;
-      border: 1px solid rgba(255,255,255,0.15);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 6px;
       background: rgba(9, 14, 20, 0.52);
       font-size: 13px;
@@ -225,7 +440,7 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 8px;
       background: rgba(13, 19, 22, 0.86);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.36);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.36);
     }
 
     #loginBox h2 {
@@ -320,8 +535,8 @@
       transition: opacity 120ms ease;
       background:
         radial-gradient(circle at center, transparent 0 46%, rgba(2, 4, 7, 0.32) 46.5%, rgba(2, 4, 7, 0.74) 100%),
-        linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,0.64) 50%, transparent calc(50% + 1px)),
-        linear-gradient(0deg, transparent calc(50% - 1px), rgba(255,255,255,0.64) 50%, transparent calc(50% + 1px));
+        linear-gradient(90deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.64) 50%, transparent calc(50% + 1px)),
+        linear-gradient(0deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.64) 50%, transparent calc(50% + 1px));
     }
 
     #scope.active {
@@ -332,25 +547,26 @@
     #scope.shotgun {
       background:
         radial-gradient(circle at center, transparent 0 56%, rgba(2, 4, 7, 0.24) 56.5%, rgba(2, 4, 7, 0.48) 100%),
-        radial-gradient(circle at center, transparent 0 4px, rgba(255,255,255,0.7) 4px 5px, transparent 5px);
+        radial-gradient(circle at center, transparent 0 4px, rgba(255, 255, 255, 0.7) 4px 5px, transparent 5px);
     }
 
     #scope.assault {
       background:
         radial-gradient(circle at center, transparent 0 50%, rgba(2, 4, 7, 0.26) 50.5%, rgba(2, 4, 7, 0.6) 100%),
-        linear-gradient(90deg, transparent calc(50% - 1px), rgba(230,245,255,0.55) 50%, transparent calc(50% + 1px)),
-        linear-gradient(0deg, transparent calc(50% - 1px), rgba(230,245,255,0.55) 50%, transparent calc(50% + 1px));
+        linear-gradient(90deg, transparent calc(50% - 1px), rgba(230, 245, 255, 0.55) 50%, transparent calc(50% + 1px)),
+        linear-gradient(0deg, transparent calc(50% - 1px), rgba(230, 245, 255, 0.55) 50%, transparent calc(50% + 1px));
     }
 
     #scope.sniper {
       background:
         radial-gradient(circle at center, transparent 0 31%, rgba(0, 0, 0, 0.94) 31.5%),
-        radial-gradient(circle at center, transparent 0 29%, rgba(255,255,255,0.72) 29.2% 29.5%, transparent 29.8%),
-        linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,0.86) 50%, transparent calc(50% + 1px)),
-        linear-gradient(0deg, transparent calc(50% - 1px), rgba(255,255,255,0.86) 50%, transparent calc(50% + 1px));
+        radial-gradient(circle at center, transparent 0 29%, rgba(255, 255, 255, 0.72) 29.2% 29.5%, transparent 29.8%),
+        linear-gradient(90deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.86) 50%, transparent calc(50% + 1px)),
+        linear-gradient(0deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.86) 50%, transparent calc(50% + 1px));
     }
   </style>
 </head>
+
 <body>
   <div id="hud">
     <div id="damageVignette"></div>
@@ -358,9 +574,65 @@
     <div id="crosshair"></div>
     <div id="panel">
       <div>Players Online: <strong id="playersOnline">1</strong></div>
-      <div>Health: <strong id="health">100</strong></div>
       <div>Score: <strong id="score">0</strong></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+        <span>Health</span>
+        <strong id="health">100</strong>
+      </div>
+      <div class="barTrack">
+        <div id="healthBar" class="barFill"></div>
+      </div>
+      <div>Ammo: <strong id="ammoCount">∞</strong></div>
       <div>Mode: <strong id="status">Click to play</strong></div>
+    </div>
+    <div id="performancePanel">
+      <div><span>Ping</span><strong id="perfPing">0 ms</strong></div>
+      <div><span>FPS</span><strong id="perfFps">0</strong></div>
+      <div><span>Render</span><strong id="perfRender">0.0 ms</strong></div>
+    </div>
+    <button id="settingsButton" type="button">SETTINGS</button>
+    <div id="settingsOverlay">
+      <div id="settingsBox">
+        <div id="settingsHeader">
+          <h2>Settings</h2>
+          <button id="settingsClose" type="button">✕</button>
+        </div>
+        <div id="settingsContent">
+          <div class="settingRow">
+            <label for="sensitivityRange">Mouse sensitivity</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input id="sensitivityRange" type="range" min="0.4" max="2.4" step="0.1" value="1.0">
+              <strong id="sensitivityValue">1.0x</strong>
+            </div>
+          </div>
+          <div class="settingRow">
+            <label><input id="showPerformanceToggle" type="checkbox" checked> Show performance overlay</label>
+          </div>
+          <div class="settingRow">
+            <label><input id="lowDetailToggle" type="checkbox"> Low-detail mode</label>
+          </div>
+          <div class="settingSection">
+            <h3>Keybinds</h3>
+            <div class="keybindRow"><span>Forward</span><button class="keybindButton" data-bind="moveForward">W</button>
+            </div>
+            <div class="keybindRow"><span>Backward</span><button class="keybindButton"
+                data-bind="moveBackward">S</button></div>
+            <div class="keybindRow"><span>Left</span><button class="keybindButton" data-bind="moveLeft">A</button></div>
+            <div class="keybindRow"><span>Right</span><button class="keybindButton" data-bind="moveRight">D</button>
+            </div>
+            <div class="keybindRow"><span>Sprint</span><button class="keybindButton" data-bind="sprint">Shift</button>
+            </div>
+            <div class="keybindRow"><span>Crouch</span><button class="keybindButton" data-bind="crouch">Ctrl</button>
+            </div>
+            <div class="keybindRow"><span>Jump</span><button class="keybindButton" data-bind="jump">Space</button></div>
+            <div class="keybindRow"><span>Reload</span><button class="keybindButton" data-bind="reload">R</button></div>
+            <div class="keybindRow"><span>Grenade</span><button class="keybindButton" data-bind="grenade">G</button>
+            </div>
+          </div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.6); line-height:1.5; margin-top:10px;">Click any keybind
+            to remap it, then press a key.</div>
+        </div>
+      </div>
     </div>
     <div id="weaponBar">
       <div class="slot active" data-weapon="assault">1 Assault</div>
@@ -372,8 +644,10 @@
       <div id="roundTitle">Round Vote</div>
       <div id="roundStatus">Choose the next mode</div>
       <div id="voteGraph">
-        <div class="voteRow"><span>Battle</span><span class="voteTrack"><span id="battleFill" class="voteFill battle"></span></span><strong id="battleCount">0</strong></div>
-        <div class="voteRow"><span>Co-Op</span><span class="voteTrack"><span id="coopFill" class="voteFill"></span></span><strong id="coopCount">0</strong></div>
+        <div class="voteRow"><span>Battle</span><span class="voteTrack"><span id="battleFill"
+              class="voteFill battle"></span></span><strong id="battleCount">0</strong></div>
+        <div class="voteRow"><span>Co-Op</span><span class="voteTrack"><span id="coopFill"
+              class="voteFill"></span></span><strong id="coopCount">0</strong></div>
         <div id="voteNames">No votes yet</div>
       </div>
       <div id="voteButtons">
@@ -392,7 +666,8 @@
     </div>
     <div id="notice">
       <h1>ARENA FPS</h1>
-      <p>Click to lock pointer. WASD move, Shift sprint, Ctrl slide, Space jump, mouse shoots, right mouse aims, R reloads shotgun, 4 equips knife.</p>
+      <p>Click to lock pointer. WASD move, Shift sprint, Ctrl slide, Space jump, mouse shoots, right mouse aims, R
+        reloads shotgun, 4 equips knife.</p>
     </div>
   </div>
 
@@ -485,9 +760,9 @@
         hipFov: 76,
         adsOffset: new THREE.Vector3(0.08, -0.28, -0.82),
         hipOffset: new THREE.Vector3(0.34, -0.36, -0.72),
-        ammo: Infinity,
-        magazine: Infinity,
-        reloadTime: 0,
+        magazine: 30,
+        reserve: 90,
+        reloadTime: 1350,
       },
       shotgun: {
         label: 'Shotgun',
@@ -502,8 +777,8 @@
         hipFov: 76,
         adsOffset: new THREE.Vector3(0.1, -0.3, -0.8),
         hipOffset: new THREE.Vector3(0.38, -0.38, -0.66),
-        ammo: 6,
         magazine: 6,
+        reserve: 24,
         reloadTime: 1250,
       },
       sniper: {
@@ -519,9 +794,9 @@
         hipFov: 76,
         adsOffset: new THREE.Vector3(0.02, -0.24, -0.9),
         hipOffset: new THREE.Vector3(0.36, -0.34, -0.78),
-        ammo: Infinity,
-        magazine: Infinity,
-        reloadTime: 0,
+        magazine: 5,
+        reserve: 15,
+        reloadTime: 1800,
       },
       knife: {
         label: 'Tactical Knife',
@@ -531,13 +806,13 @@
         spread: 0,
         pellets: 1,
         recoil: 0.08,
-        range: 3.1,
+        range: 3.8,
         adsFov: 70,
         hipFov: 76,
-        adsOffset: new THREE.Vector3(0.16, -0.28, -0.68),
-        hipOffset: new THREE.Vector3(0.42, -0.4, -0.54),
-        ammo: Infinity,
+        adsOffset: new THREE.Vector3(0.12, -0.3, -0.62),
+        hipOffset: new THREE.Vector3(0.26, -0.43, -0.46),
         magazine: Infinity,
+        reserve: Infinity,
         reloadTime: 0,
         melee: true,
       },
@@ -546,7 +821,12 @@
     const weaponState = {
       lastShot: 0,
       reloadingUntil: 0,
-      shotgunAmmo: weapons.shotgun.magazine,
+      reloadWeapon: null,
+      ammo: {
+        assault: { current: weapons.assault.magazine, reserve: weapons.assault.reserve },
+        shotgun: { current: weapons.shotgun.magazine, reserve: weapons.shotgun.reserve },
+        sniper: { current: weapons.sniper.magazine, reserve: weapons.sniper.reserve },
+      },
       recoil: 0,
       muzzle: 0,
       zooming: false,
@@ -576,7 +856,207 @@
       scope: document.getElementById('scope'),
       crosshair: document.getElementById('crosshair'),
       slots: Array.from(document.querySelectorAll('.slot')),
+      perfPing: document.getElementById('perfPing'),
+      perfFps: document.getElementById('perfFps'),
+      perfRender: document.getElementById('perfRender'),
+      performancePanel: document.getElementById('performancePanel'),
+      ammoCount: document.getElementById('ammoCount'),
+      healthBar: document.getElementById('healthBar'),
+      sensitivityRange: document.getElementById('sensitivityRange'),
+      sensitivityValue: document.getElementById('sensitivityValue'),
+      showPerformanceToggle: document.getElementById('showPerformanceToggle'),
+      lowDetailToggle: document.getElementById('lowDetailToggle'),
+      keybindButtons: Array.from(document.querySelectorAll('.keybindButton')),
+      settingsButton: document.getElementById('settingsButton'),
+      settingsOverlay: document.getElementById('settingsOverlay'),
+      settingsClose: document.getElementById('settingsClose'),
     };
+
+    const performanceStats = {
+      fps: 0,
+      renderMs: 0,
+      ping: 0,
+      frameAccumulator: 0,
+      frameCount: 0,
+      lastFpsAt: performance.now(),
+    };
+
+    function refreshPerformanceDisplay() {
+      ui.perfFps.textContent = Math.max(0, Math.round(performanceStats.fps));
+      ui.perfRender.textContent = `${performanceStats.renderMs.toFixed(1)} ms`;
+      ui.perfPing.textContent = `${Math.round(performanceStats.ping)} ms`;
+      ui.performancePanel.classList.toggle('hidden', !settings.showPerformance);
+    }
+
+    const settings = {
+      sensitivity: 1.0,
+      showPerformance: true,
+      lowDetail: false,
+      waitingForKeybind: null,
+      keybinds: {
+        moveForward: 'KeyW',
+        moveBackward: 'KeyS',
+        moveLeft: 'KeyA',
+        moveRight: 'KeyD',
+        sprint: 'ShiftLeft',
+        crouch: 'ControlLeft',
+        jump: 'Space',
+        reload: 'KeyR',
+        grenade: 'KeyG',
+      },
+    };
+
+    function applySettings() {
+      controls.pointerSpeed = settings.sensitivity;
+      ui.sensitivityRange.value = settings.sensitivity;
+      ui.sensitivityValue.textContent = `${settings.sensitivity.toFixed(1)}x`;
+      ui.showPerformanceToggle.checked = settings.showPerformance;
+      ui.lowDetailToggle.checked = settings.lowDetail;
+      ui.performancePanel.classList.toggle('hidden', !settings.showPerformance);
+      renderer.setPixelRatio(settings.lowDetail ? 1 : Math.min(window.devicePixelRatio, 1.8));
+      renderer.shadowMap.enabled = !settings.lowDetail;
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      updateKeybindButtons();
+      updateAmmoDisplay();
+      updateHealthBar();
+    }
+
+    function saveSettings() {
+      window.localStorage.setItem('arena-fps-settings', JSON.stringify(settings));
+    }
+
+    function loadSettings() {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem('arena-fps-settings') || '{}');
+        if (typeof stored.sensitivity === 'number') settings.sensitivity = stored.sensitivity;
+        if (typeof stored.showPerformance === 'boolean') settings.showPerformance = stored.showPerformance;
+        if (typeof stored.lowDetail === 'boolean') settings.lowDetail = stored.lowDetail;
+        if (stored.keybinds && typeof stored.keybinds === 'object') {
+          settings.keybinds = { ...settings.keybinds, ...stored.keybinds };
+        }
+      } catch (error) {
+        // ignore local storage problems
+      }
+    }
+
+    function updateKeybindButtons() {
+      ui.keybindButtons.forEach((button) => {
+        const action = button.dataset.bind;
+        button.textContent = formatKeyLabel(settings.keybinds[action]);
+      });
+    }
+
+    function formatKeyLabel(code) {
+      if (!code) return '---';
+      return code
+        .replace('Key', '')
+        .replace('Digit', '')
+        .replace('Arrow', '↔')
+        .replace('ShiftLeft', 'Shift')
+        .replace('ShiftRight', 'Shift')
+        .replace('ControlLeft', 'Ctrl')
+        .replace('ControlRight', 'Ctrl')
+        .replace('Space', 'Space')
+        .replace('AltLeft', 'Alt')
+        .replace('AltRight', 'Alt');
+    }
+
+    function isActionPressed(action) {
+      const code = settings.keybinds[action];
+      return Boolean(code && keys.has(code));
+    }
+
+    function updateAmmoDisplay() {
+      const weapon = weapons[localPlayer.weapon];
+      const ammoState = weaponState.ammo[localPlayer.weapon];
+      if (!weapon || !ammoState || weapon.magazine === Infinity) {
+        ui.ammoCount.textContent = '∞';
+        return;
+      }
+      ui.ammoCount.textContent = `${ammoState.current} / ${ammoState.reserve}`;
+    }
+
+    function updateHealthBar() {
+      const percent = THREE.MathUtils.clamp(localPlayer.health / 100, 0, 1) * 100;
+      ui.healthBar.style.width = `${percent}%`;
+      ui.healthBar.style.background = percent > 40
+        ? 'linear-gradient(90deg, #f05d60, #ffc56f)'
+        : 'linear-gradient(90deg, #ff4c4c, #ffb86f)';
+    }
+
+    loadSettings();
+    applySettings();
+
+    function requestPing() {
+      const sent = performance.now();
+      socket.emit('pingCheck', sent, () => {
+        performanceStats.ping = Math.max(0, performance.now() - sent);
+        refreshPerformanceDisplay();
+      });
+    }
+
+    function updatePerformanceStats(delta, renderMs = 0) {
+      performanceStats.frameAccumulator += delta;
+      performanceStats.frameCount += 1;
+      performanceStats.renderMs = performanceStats.renderMs * 0.85 + renderMs * 0.15;
+      const now = performance.now();
+      if (now - performanceStats.lastFpsAt > 500) {
+        performanceStats.fps = performanceStats.frameCount / Math.max(0.001, performanceStats.frameAccumulator);
+        performanceStats.frameAccumulator = 0;
+        performanceStats.frameCount = 0;
+        performanceStats.lastFpsAt = now;
+        refreshPerformanceDisplay();
+      }
+    }
+
+    ui.settingsButton.addEventListener('click', () => {
+      ui.settingsOverlay.classList.add('active');
+    });
+
+    ui.settingsClose.addEventListener('click', () => {
+      ui.settingsOverlay.classList.remove('active');
+    });
+
+    ui.sensitivityRange.addEventListener('input', (event) => {
+      settings.sensitivity = Number(event.target.value);
+      ui.sensitivityValue.textContent = `${settings.sensitivity.toFixed(1)}x`;
+      applySettings();
+      saveSettings();
+    });
+
+    ui.showPerformanceToggle.addEventListener('change', (event) => {
+      settings.showPerformance = event.target.checked;
+      applySettings();
+      saveSettings();
+    });
+
+    ui.lowDetailToggle.addEventListener('change', (event) => {
+      settings.lowDetail = event.target.checked;
+      applySettings();
+      saveSettings();
+    });
+
+    ui.keybindButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        settings.waitingForKeybind = button.dataset.bind;
+        button.textContent = 'Press key...';
+      });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (settings.waitingForKeybind) {
+        const action = settings.waitingForKeybind;
+        settings.keybinds[action] = event.code;
+        settings.waitingForKeybind = null;
+        updateKeybindButtons();
+        saveSettings();
+        event.preventDefault();
+        return;
+      }
+      if (event.code === 'Escape' && ui.settingsOverlay.classList.contains('active')) {
+        ui.settingsOverlay.classList.remove('active');
+      }
+    });
 
     setupLighting();
     createSky();
@@ -629,6 +1109,7 @@
       if (id === localPlayer.id) {
         localPlayer.health = health;
         ui.health.textContent = Math.round(health);
+        updateHealthBar();
         ui.damageVignette.style.opacity = '1';
         window.setTimeout(() => ui.damageVignette.style.opacity = '0', 120);
       }
@@ -645,6 +1126,7 @@
         localPlayer.slideTime = 0;
         localPlayer.health = 100;
         ui.health.textContent = 100;
+        updateHealthBar();
       }
       if (by === localPlayer.id) {
         localPlayer.score = score;
@@ -671,8 +1153,8 @@
       if (event.code === 'Digit2') setWeapon('shotgun');
       if (event.code === 'Digit3') setWeapon('sniper');
       if (event.code === 'Digit4') setWeapon('knife');
-      if (event.code === 'KeyR') reloadShotgun();
-      if (event.code === 'KeyG') throwGrenade();
+      if (event.code === settings.keybinds.reload) reloadWeapon();
+      if (event.code === settings.keybinds.grenade) throwGrenade();
     });
 
     ui.voteButtons.forEach((button) => {
@@ -701,6 +1183,8 @@
     window.addEventListener('resize', onResize);
 
     animate();
+    requestPing();
+    window.setInterval(requestPing, 3000);
 
     function joinWithName() {
       const clean = ui.usernameInput.value.trim().replace(/[^\w .-]/g, '').slice(0, 18) || `Player ${Math.floor(Math.random() * 9000 + 1000)}`;
@@ -1034,12 +1518,12 @@
       leftSleeve.rotation.set(0.25, 0.2, -0.38);
       const rightSleeve = box(0.18, 0.17, 0.45, 0.32, -0.23, 0.02, polymer);
       rightSleeve.rotation.set(0.2, -0.2, 0.42);
-      const knifeHandle = box(0.1, 0.12, 0.38, 0.2, -0.16, -0.52, polymer);
-      knifeHandle.rotation.set(-0.22, -0.24, 0.62);
-      const knifeGuard = box(0.34, 0.055, 0.07, 0.18, -0.09, -0.68, brass);
+      const knifeHandle = box(0.1, 0.13, 0.36, 0.02, -0.07, -0.24, polymer);
+      knifeHandle.rotation.set(-0.18, -0.08, 0.48);
+      const knifeGuard = box(0.3, 0.05, 0.07, 0.02, -0.02, -0.44, brass);
       knifeGuard.rotation.copy(knifeHandle.rotation);
-      const knifeBlade = box(0.085, 0.035, 0.72, 0.28, -0.02, -1.02, new THREE.MeshStandardMaterial({ color: 0xbfc8cc, roughness: 0.28, metalness: 0.76 }));
-      knifeBlade.rotation.set(-0.22, -0.24, 0.62);
+      const knifeBlade = box(0.075, 0.03, 0.62, 0.03, 0.02, -0.76, new THREE.MeshStandardMaterial({ color: 0xbfc8cc, roughness: 0.28, metalness: 0.76 }));
+      knifeBlade.rotation.copy(knifeHandle.rotation);
 
       const flash = new THREE.PointLight(0xffc46a, 0, 8);
       flash.position.set(0, 0.04, -1.64);
@@ -1178,26 +1662,26 @@
     function updateRoundUi(round) {
       if (!round) return;
       currentRound = round;
-      const battleVotes = round.votes ? round.votes.battle : 0;
-      const coopVotes = round.votes ? round.votes.coop : 0;
+      const battleVotes = round.votes ? Number(round.votes.battle) || 0 : 0;
+      const coopVotes = round.votes ? Number(round.votes.coop) || 0 : 0;
       const totalVotes = Math.max(1, battleVotes + coopVotes);
       ui.battleCount.textContent = battleVotes;
       ui.coopCount.textContent = coopVotes;
       ui.battleFill.style.width = `${Math.round((battleVotes / totalVotes) * 100)}%`;
       ui.coopFill.style.width = `${Math.round((coopVotes / totalVotes) * 100)}%`;
-      const voters = round.voters || [];
+      const voters = Array.isArray(round.voters) ? round.voters : [];
       ui.voteNames.textContent = voters.length
-        ? voters.map((voter) => `${voter.name}: ${voter.vote === 'coop' ? 'Co-Op' : 'Battle'}`).join(' · ')
+        ? voters.map((voter) => `${voter.name}: ${voter.vote === 'coop' ? 'Co-Op' : 'Battle'}`).join(' | ')
         : 'No votes yet';
-      const remaining = Math.max(0, Math.ceil((round.endsAt - Date.now()) / 1000));
+      const remaining = Math.max(0, Math.ceil(((round.endsAt || Date.now()) - Date.now()) / 1000));
       if (round.phase === 'voting') {
-        ui.roundTitle.textContent = `Round Vote · ${remaining}s`;
-        ui.roundStatus.textContent = `Battle ${round.votes.battle} · Co-Op ${round.votes.coop}`;
+        ui.roundTitle.textContent = `Round Vote - ${remaining}s`;
+        ui.roundStatus.textContent = `Battle ${battleVotes} - Co-Op ${coopVotes}`;
       } else if (round.mode === 'coop') {
         ui.roundTitle.textContent = 'Co-Op Wave';
-        ui.roundStatus.textContent = `Wave ${round.wave} · Zombies ${zombies.size}`;
+        ui.roundStatus.textContent = `Wave ${round.wave} - Zombies ${zombies.size}`;
       } else {
-        ui.roundTitle.textContent = `Battle · ${remaining}s`;
+        ui.roundTitle.textContent = `Battle - ${remaining}s`;
         ui.roundStatus.textContent = 'Free-for-all';
       }
     }
@@ -1276,6 +1760,7 @@
       ui.slots.forEach((slot) => slot.classList.toggle('active', slot.dataset.weapon === name));
       updateWeaponVisual(name);
       ui.status.textContent = name === 'knife' ? 'Knife ready: left click' : 'Live';
+      updateAmmoDisplay();
     }
 
     function updateWeaponVisual(name) {
@@ -1294,9 +1779,9 @@
       p.leftHand.visible = true;
       p.rightHand.visible = true;
       if (knife) {
-        p.leftHand.position.set(-0.18, -0.28, -0.38);
-        p.rightHand.position.set(0.2, -0.15, -0.54);
-        p.rightSleeve.position.set(0.31, -0.24, -0.25);
+        p.leftHand.position.set(-0.12, -0.26, -0.22);
+        p.rightHand.position.set(0.02, -0.1, -0.28);
+        p.rightSleeve.position.set(0.18, -0.23, -0.12);
         p.leftSleeve.rotation.set(0.3, 0.2, -0.55);
         p.rightSleeve.rotation.set(0.12, -0.3, 0.72);
         return;
@@ -1318,11 +1803,30 @@
       p.sideModule.visible = !sniper;
     }
 
-    function reloadShotgun() {
-      if (localPlayer.weapon !== 'shotgun') return;
-      if (weaponState.shotgunAmmo === weapons.shotgun.magazine) return;
-      weaponState.reloadingUntil = performance.now() + weapons.shotgun.reloadTime;
-      ui.status.textContent = 'Reloading';
+    function reloadWeapon() {
+      const weapon = weapons[localPlayer.weapon];
+      if (!weapon || weapon.melee || weapon.magazine === Infinity || weapon.reloadTime === 0) return;
+      const ammoState = weaponState.ammo[localPlayer.weapon];
+      if (!ammoState || ammoState.current >= weapon.magazine || ammoState.reserve <= 0) return;
+      weaponState.reloadWeapon = localPlayer.weapon;
+      weaponState.reloadingUntil = performance.now() + weapon.reloadTime;
+      ui.status.textContent = `Reloading ${weapon.label}`;
+      updateAmmoDisplay();
+    }
+
+    function completeReload(now) {
+      if (!weaponState.reloadWeapon || weaponState.reloadingUntil === 0 || now < weaponState.reloadingUntil) return;
+      const weaponName = weaponState.reloadWeapon;
+      const weapon = weapons[weaponName];
+      const ammoState = weaponState.ammo[weaponName];
+      const needed = weapon.magazine - ammoState.current;
+      const loaded = Math.min(needed, ammoState.reserve);
+      ammoState.current += loaded;
+      ammoState.reserve -= loaded;
+      weaponState.reloadingUntil = 0;
+      weaponState.reloadWeapon = null;
+      if (localPlayer.weapon === weaponName) ui.status.textContent = 'Live';
+      updateAmmoDisplay();
     }
 
     function throwGrenade() {
@@ -1368,6 +1872,7 @@
       requestAnimationFrame(animate);
       const delta = Math.min(clock.getDelta(), 0.033);
       worldTime += delta;
+      completeReload(performance.now());
       updateMovement(delta);
       updateShooting();
       updateRemotePlayers(delta);
@@ -1377,7 +1882,9 @@
       updateWeaponModel(delta);
       updateInteractiveProps(delta);
       updateNetworking();
+      const renderStart = performance.now();
       renderer.render(scene, camera);
+      updatePerformanceStats(delta, performance.now() - renderStart);
     }
 
     function updateMovement(delta) {
@@ -1385,8 +1892,8 @@
       const object = controls.getObject();
       object.position.y -= localPlayer.cameraBobOffset;
       localPlayer.cameraBobOffset = 0;
-      const sprinting = keys.has('ShiftLeft') || keys.has('ShiftRight');
-      const crouchPressed = keys.has('ControlLeft') || keys.has('ControlRight') || keys.has('KeyC');
+      const sprinting = isActionPressed('sprint') || keys.has('ShiftRight');
+      const crouchPressed = isActionPressed('crouch') || keys.has('ControlRight') || keys.has('KeyC');
       const horizontalSpeed = Math.hypot(localPlayer.velocity.x, localPlayer.velocity.z);
       const waterAmount = getWaterAmount(object.position);
       const waterSlow = THREE.MathUtils.lerp(1, 0.58, waterAmount);
@@ -1394,9 +1901,9 @@
       const acceleration = (localPlayer.grounded ? (sprinting ? 34 : 42) : 14) * THREE.MathUtils.lerp(1, 0.72, waterAmount);
       const damping = Math.exp(-(localPlayer.sliding ? 2.6 : 7.2 + waterAmount * 3.8) * delta);
       const input = new THREE.Vector3(
-        Number(keys.has('KeyD')) - Number(keys.has('KeyA')),
+        Number(isActionPressed('moveRight')) - Number(isActionPressed('moveLeft')),
         0,
-        Number(keys.has('KeyS')) - Number(keys.has('KeyW'))
+        Number(isActionPressed('moveBackward')) - Number(isActionPressed('moveForward'))
       );
 
       if (crouchPressed && sprinting && localPlayer.grounded && !localPlayer.sliding && horizontalSpeed > 10.5) {
@@ -1434,7 +1941,7 @@
         localPlayer.velocity.z *= damping;
       }
 
-      if (keys.has('Space') && localPlayer.grounded) {
+      if (isActionPressed('jump') && localPlayer.grounded) {
         localPlayer.velocity.y = 8.2;
         localPlayer.grounded = false;
       }
@@ -1463,7 +1970,7 @@
       const bobStrength = localPlayer.grounded ? THREE.MathUtils.clamp(finalSpeed / 18, 0, 1) : 0;
       localPlayer.cameraBobOffset = localPlayer.sliding ? -0.06 : Math.sin(localPlayer.bob * 2) * 0.045 * bobStrength;
       object.position.y += localPlayer.cameraBobOffset;
-      const targetRoll = localPlayer.sliding ? -0.08 : (keys.has('KeyA') ? 0.025 : 0) + (keys.has('KeyD') ? -0.025 : 0) + Math.sin(localPlayer.bob) * 0.012 * bobStrength;
+      const targetRoll = localPlayer.sliding ? -0.08 : (isActionPressed('moveLeft') ? 0.025 : 0) + (isActionPressed('moveRight') ? -0.025 : 0) + Math.sin(localPlayer.bob) * 0.012 * bobStrength;
       localPlayer.cameraRoll = THREE.MathUtils.lerp(localPlayer.cameraRoll, targetRoll, Math.min(1, delta * 10));
     }
 
@@ -1551,21 +2058,20 @@
       if (!controls.isLocked) return;
       const weapon = weapons[localPlayer.weapon];
       const now = performance.now();
-      if (localPlayer.weapon === 'shotgun' && now >= weaponState.reloadingUntil && weaponState.reloadingUntil !== 0) {
-        weaponState.shotgunAmmo = weapons.shotgun.magazine;
-        weaponState.reloadingUntil = 0;
-        ui.status.textContent = 'Live';
-      }
+      completeReload(now);
 
       const wantsShot = localPlayer.shooting && (weapon.automatic || now - weaponState.lastShot > weapon.fireDelay + 30);
-      if (!wantsShot || now - weaponState.lastShot < weapon.fireDelay || now < weaponState.reloadingUntil) return;
+      if (!wantsShot || now - weaponState.lastShot < weapon.fireDelay) return;
+      if (weaponState.reloadWeapon === localPlayer.weapon && now < weaponState.reloadingUntil) return;
       if (weapon.melee) {
         swingMelee(weapon, now);
         localPlayer.shooting = false;
         return;
       }
-      if (localPlayer.weapon === 'shotgun' && weaponState.shotgunAmmo <= 0) {
-        reloadShotgun();
+
+      const ammoState = weaponState.ammo[localPlayer.weapon];
+      if (weapon.magazine !== Infinity && ammoState && ammoState.current <= 0) {
+        reloadWeapon();
         return;
       }
 
@@ -1614,7 +2120,11 @@
       weaponState.lastShot = now;
       weaponState.recoil = Math.min(1, weaponState.recoil + weapon.recoil);
       weaponState.muzzle = 1;
-      if (localPlayer.weapon === 'shotgun') weaponState.shotgunAmmo -= 1;
+      const ammoState = weaponState.ammo[localPlayer.weapon];
+      if (ammoState && ammoState.current !== Infinity) {
+        ammoState.current = Math.max(0, ammoState.current - 1);
+        updateAmmoDisplay();
+      }
 
       const origin = camera.getWorldPosition(new THREE.Vector3());
       camera.getWorldDirection(mouseDirection);
@@ -1664,9 +2174,14 @@
       for (const [id, rig] of playerMeshes) {
         const target = playerTargets.get(id);
         if (!target) continue;
-        tempVector.set(target.position.x, target.position.y - 2, target.position.z);
-        rig.root.position.lerp(tempVector, Math.min(1, delta * 12));
-        rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, target.rotation.y, Math.min(1, delta * 10));
+        const age = target.updatedAt ? Math.min(0.18, Math.max(0, (Date.now() - target.updatedAt) / 1000)) : 0;
+        tempVector.set(
+          target.position.x + (target.velocity ? target.velocity.x * age : 0),
+          target.position.y - 2,
+          target.position.z + (target.velocity ? target.velocity.z * age : 0)
+        );
+        rig.root.position.lerp(tempVector, Math.min(1, delta * 9));
+        rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, target.rotation.y, Math.min(1, delta * 8));
         const speed = target.velocity ? Math.hypot(target.velocity.x, target.velocity.z) : 0;
         const stride = worldTime * (speed > 11 ? 10 : 6.5) + id.length;
         const walk = THREE.MathUtils.clamp(speed / 12, 0, 1);
@@ -1924,6 +2439,7 @@
         if (distance < 2.1) {
           localPlayer.health = Math.min(100, localPlayer.health + 18 * delta);
           ui.health.textContent = Math.round(localPlayer.health);
+          updateHealthBar();
           prop.scale.setScalar(1 + Math.sin(worldTime * 16) * 0.08);
         } else {
           prop.scale.lerp(new THREE.Vector3(1, 1, 1), Math.min(1, delta * 6));
@@ -1942,4 +2458,5 @@
     }
   </script>
 </body>
+
 </html>

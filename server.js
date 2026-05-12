@@ -24,6 +24,7 @@ app.get('/', (_req, res) => {
 const players = new Map();
 const votes = new Map();
 const zombies = new Map();
+const playerSettings = new Map();
 let zombieCounter = 0;
 let round = {
   phase: 'voting',
@@ -45,6 +46,7 @@ function publicPlayer(player) {
     velocity: player.velocity,
     shooting: player.shooting,
     lastShotAt: player.lastShotAt,
+    updatedAt: player.updatedAt,
   };
 }
 
@@ -100,6 +102,7 @@ io.on('connection', (socket) => {
     velocity: { x: 0, y: 0, z: 0 },
     shooting: false,
     lastShotAt: 0,
+    updatedAt: Date.now(),
   };
 
   players.set(socket.id, player);
@@ -123,6 +126,7 @@ io.on('connection', (socket) => {
     if (state.velocity) current.velocity = sanitizeVector(state.velocity, current.velocity);
     if (typeof state.weapon === 'string') current.weapon = state.weapon;
     current.shooting = Boolean(state.shooting);
+    current.updatedAt = Date.now();
   });
 
   socket.on('setName', (name) => {
@@ -131,6 +135,10 @@ io.on('connection', (socket) => {
     current.name = sanitizeName(name, current.name);
     io.emit('playerRenamed', { id: socket.id, name: current.name });
     io.emit('roundState', publicRound());
+  });
+
+  socket.on('pingCheck', (_sent, callback) => {
+    if (typeof callback === 'function') callback(Date.now());
   });
 
   socket.on('shoot', (shot = {}) => {
@@ -165,18 +173,22 @@ io.on('connection', (socket) => {
   });
 
   socket.on('voteMode', (mode) => {
-    if (round.phase !== 'voting') return;
     if (mode !== 'battle' && mode !== 'coop') return;
     votes.set(socket.id, mode);
     io.emit('roundState', publicRound());
   });
 
-  socket.on('hit', ({ targetId, damage, weapon } = {}) => {
+  socket.on('hit', ({ targetId, damage, weapon, headshot } = {}) => {
     const attacker = players.get(socket.id);
     const target = players.get(targetId);
     if (!attacker || !target || targetId === socket.id) return;
 
-    const hitDamage = Math.max(0, Math.min(Number(damage) || 0, 100));
+    let hitDamage = Math.max(0, Math.min(Number(damage) || 0, 100));
+    if (weapon === 'knife') {
+      hitDamage = headshot ? 100 : 50;
+    } else if (headshot) {
+      hitDamage *= 2;
+    }
     target.health = Math.max(0, target.health - hitDamage);
 
     if (target.health <= 0) {
@@ -195,6 +207,7 @@ io.on('connection', (socket) => {
         position: target.position,
         killerName: attacker.name,
         victimName: target.name,
+        headshot,
       });
       io.emit('killFeed', {
         killerId: socket.id,
@@ -202,6 +215,7 @@ io.on('connection', (socket) => {
         killerName: attacker.name,
         victimName: target.name,
         weapon,
+        headshot,
       });
     }
 
@@ -210,6 +224,8 @@ io.on('connection', (socket) => {
       health: target.health,
       attackerId: socket.id,
       attackerScore: attacker.score,
+      damage: hitDamage,
+      isHeadshot: Boolean(headshot),
     });
   });
 
@@ -261,7 +277,11 @@ function updateRound() {
   }
 
   if (round.phase === 'playing' && round.mode === 'battle' && now >= round.endsAt) {
-    startVoting();
+    if (votes.size > 0) {
+      startRound(getWinningVote());
+    } else {
+      startVoting();
+    }
   }
 
   if (round.phase === 'playing' && round.mode === 'coop' && zombies.size === 0) {
@@ -292,6 +312,7 @@ function startVoting() {
 
 function startRound(mode) {
   zombies.clear();
+  votes.clear();
   round = {
     phase: 'playing',
     mode,
@@ -300,6 +321,16 @@ function startRound(mode) {
   };
   io.emit('roundState', publicRound());
   if (mode === 'coop') spawnWave();
+}
+
+function getWinningVote() {
+  let battle = 0;
+  let coop = 0;
+  for (const vote of votes.values()) {
+    if (vote === 'coop') coop += 1;
+    if (vote === 'battle') battle += 1;
+  }
+  return coop > battle ? 'coop' : 'battle';
 }
 
 function spawnWave() {
@@ -399,5 +430,5 @@ function finiteOr(value, fallback) {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log("Server is now open to the network on port 3000. Players can connect using your local IP address.");
+  console.log(`Smoke test online`);
 });
