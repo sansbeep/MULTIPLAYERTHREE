@@ -106,6 +106,20 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     }
 
+    #panel,
+    #performancePanel,
+    #roundPanel,
+    #weaponBar,
+    #grenadeHud,
+    #loginBox,
+    #notice,
+    #settingsBox {
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.05)),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 9px);
+      background-blend-mode: overlay;
+    }
+
     #performancePanel {
       position: absolute;
       left: 50%;
@@ -457,7 +471,7 @@
     }
 
     #loginBox {
-      width: min(420px, calc(100vw - 32px));
+      width: min(520px, calc(100vw - 32px));
       max-height: min(680px, calc(100vh - 40px));
       overflow-y: auto;
       padding: 18px;
@@ -506,13 +520,19 @@
     }
 
     .mapPick button {
-      min-height: 56px;
+      min-height: 72px;
       height: auto;
       text-align: left;
       padding: 8px 10px;
       background: rgba(255, 255, 255, 0.08);
       color: #e8edf3;
       border: 1px solid rgba(255, 255, 255, 0.16);
+      overflow: hidden;
+      white-space: normal;
+      word-break: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.2;
+      display: block;
     }
 
     .mapPick button.active {
@@ -525,6 +545,9 @@
       margin-top: 3px;
       color: rgba(255, 255, 255, 0.62);
       line-height: 1.25;
+      max-width: 100%;
+      white-space: normal;
+      font-size: 12px;
     }
 
     .slot {
@@ -780,6 +803,7 @@
     const interactiveProps = [];
     const hitMarkers = [];
     const keys = new Set();
+    const textureCache = new Map();
     let currentRound = null;
     let activeMap = 'hydro';
     scene.add(arenaRoot);
@@ -826,11 +850,11 @@
       },
       shotgun: {
         label: 'Shotgun',
-        damage: 14,
+        damage: 13,
         fireDelay: 760,
         automatic: false,
-        spread: 0.11,
-        pellets: 9,
+        spread: 0.18,
+        pellets: 12,
         recoil: 0.16,
         range: 62,
         adsFov: 62,
@@ -869,8 +893,8 @@
         range: 3.8,
         adsFov: 70,
         hipFov: 76,
-        adsOffset: new THREE.Vector3(0.12, -0.3, -0.62),
-        hipOffset: new THREE.Vector3(0.26, -0.43, -0.46),
+        adsOffset: new THREE.Vector3(0.18, -0.22, -0.62),
+        hipOffset: new THREE.Vector3(0.28, -0.26, -0.56),
         magazine: Infinity,
         reserve: Infinity,
         reloadTime: 0,
@@ -1290,6 +1314,51 @@
       arenaRoot.add(object);
     }
 
+    function proceduralTexture(kind, base = '#ffffff') {
+      const key = `${kind}:${base}`;
+      if (textureCache.has(key)) return textureCache.get(key);
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.globalAlpha = 0.18;
+      for (let i = 0; i < 260; i++) {
+        const shade = Math.floor(120 + Math.random() * 90);
+        ctx.fillStyle = `rgb(${shade},${shade},${shade})`;
+        ctx.fillRect(Math.random() * 128, Math.random() * 128, 1 + Math.random() * 4, 1 + Math.random() * 4);
+      }
+      ctx.globalAlpha = 0.22;
+      ctx.strokeStyle = kind === 'tile' ? '#ffffff' : '#1e2528';
+      ctx.lineWidth = kind === 'tile' ? 2 : 1;
+      const step = kind === 'tile' ? 32 : kind === 'ceiling' ? 24 : 64;
+      for (let x = 0; x <= 128; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 128);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= 128; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(128, y);
+        ctx.stroke();
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(kind === 'tile' ? 12 : 4, kind === 'tile' ? 12 : 4);
+      textureCache.set(key, texture);
+      return texture;
+    }
+
+    function texturedMaterial(color, roughness = 0.8, metalness = 0.05, kind = 'wall') {
+      const material = new THREE.MeshStandardMaterial({ color, roughness, metalness });
+      material.map = proceduralTexture(kind, `#${new THREE.Color(color).getHexString()}`);
+      return material;
+    }
+
     function clearArena() {
       while (arenaRoot.children.length) {
         const object = arenaRoot.children.pop();
@@ -1316,7 +1385,7 @@
       scene.fog = new THREE.Fog(arcade ? 0xd7c9d8 : 0x9bb5bd, 38, 165);
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(260, 260, 1, 1),
-        new THREE.MeshStandardMaterial({ color: arcade ? 0xd5c8bd : 0x58665d, roughness: 0.96 })
+        texturedMaterial(arcade ? 0xd5c8bd : 0x58665d, 0.96, 0.02, arcade ? 'tile' : 'concrete')
       );
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
@@ -1336,19 +1405,30 @@
       runway.receiveShadow = true;
       addArena(runway);
 
-      if (arcade) addArcadeDreamscape();
-      else addWater();
-      addMountains();
-      addBridge();
-      addObstacles();
-      addInteractiveDetails();
+      if (arcade) {
+        addArcadeDreamscape();
+        addMallShops();
+      } else {
+        addWater();
+        addHydroFacility();
+        addMountains();
+        addBridge();
+        addObstacles();
+        addInteractiveDetails();
+      }
       addBoundaryWalls();
     }
 
     function addArcadeDreamscape() {
-      const tileMat = new THREE.MeshStandardMaterial({ color: 0xe8ddd0, roughness: 0.9 });
+      const tileMat = texturedMaterial(0xe8ddd0, 0.75, 0.12, 'tile');
       const neonMat = new THREE.MeshStandardMaterial({ color: 0x9cc8ff, emissive: 0x315b80, emissiveIntensity: 0.5, roughness: 0.55 });
       const fountainMat = new THREE.MeshStandardMaterial({ color: 0x9bd7df, transparent: true, opacity: 0.62, roughness: 0.18 });
+
+      const ceilingMat = texturedMaterial(0xd9cbdc, 0.86, 0.08, 'ceiling');
+      const ceiling = new THREE.Mesh(new THREE.BoxGeometry(190, 0.65, 190), ceilingMat);
+      ceiling.position.set(0, 11.5, 0);
+      ceiling.receiveShadow = true;
+      addArena(ceiling);
 
       const fountain = new THREE.Mesh(new THREE.CircleGeometry(18, 64), fountainMat);
       fountain.rotation.x = -Math.PI / 2;
@@ -1386,6 +1466,91 @@
         arch.lookAt(0, 0, 0);
         addArena(arch);
       }
+    }
+
+    function addMallShops() {
+      const wallMat = texturedMaterial(0xcfc2bd, 0.84, 0.1, 'wall');
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0xaed5e6, roughness: 0.12, metalness: 0.02, transparent: true, opacity: 0.42 });
+      const trimMat = new THREE.MeshStandardMaterial({ color: 0x6e6674, roughness: 0.72, metalness: 0.12 });
+      const signColors = [0xffc7dd, 0xbbe7ff, 0xffe4a8, 0xc5ffd5];
+      const rows = [
+        { z: -76, rot: 0 },
+        { z: 76, rot: Math.PI },
+      ];
+
+      for (const row of rows) {
+        for (let i = -4; i <= 4; i++) {
+          const x = i * 18;
+          const shop = new THREE.Group();
+          const back = new THREE.Mesh(new THREE.BoxGeometry(15, 7, 1), wallMat);
+          back.position.set(0, 3.5, 0);
+          const glass = new THREE.Mesh(new THREE.BoxGeometry(10.5, 4.2, 0.18), glassMat);
+          glass.position.set(0, 3.1, -0.62);
+          const sign = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.7, 0.2), new THREE.MeshStandardMaterial({
+            color: signColors[Math.abs(i) % signColors.length],
+            emissive: signColors[Math.abs(i) % signColors.length],
+            emissiveIntensity: 0.28,
+            roughness: 0.48,
+          }));
+          sign.position.set(0, 6.15, -0.7);
+          const awning = new THREE.Mesh(new THREE.BoxGeometry(13, 0.35, 2.2), trimMat);
+          awning.position.set(0, 5.4, -1.25);
+          shop.add(back, glass, sign, awning);
+          shop.position.set(x, 0, row.z);
+          shop.rotation.y = row.rot;
+          addArena(shop);
+          addCollider(back, 0.08);
+        }
+      }
+
+      for (const x of [-72, -36, 36, 72]) {
+        const skylight = new THREE.Mesh(new THREE.BoxGeometry(18, 0.08, 8), new THREE.MeshBasicMaterial({ color: 0xf7efff, transparent: true, opacity: 0.32 }));
+        skylight.position.set(x, 11.16, 0);
+        addArena(skylight);
+      }
+    }
+
+    function addHydroFacility() {
+      const concrete = texturedMaterial(0x66706c, 0.9, 0.12, 'concrete');
+      const metal = texturedMaterial(0x59636a, 0.58, 0.36, 'metal');
+      const pipeMat = new THREE.MeshStandardMaterial({ color: 0x56636d, roughness: 0.62, metalness: 0.42 });
+
+      for (const [x, z, sx, sz] of [[-54, 24, 24, 16], [74, 36, 30, 18], [-72, -42, 22, 20]]) {
+        const building = new THREE.Group();
+        const block = new THREE.Mesh(new THREE.BoxGeometry(sx, 8, sz), concrete);
+        block.position.y = 4;
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(sx + 2, 0.5, sz + 2), metal);
+        roof.position.y = 8.3;
+        const door = new THREE.Mesh(new THREE.BoxGeometry(3.2, 4.2, 0.22), new THREE.MeshStandardMaterial({ color: 0x26343a, roughness: 0.68, metalness: 0.2 }));
+        door.position.set(0, 2.1, -sz / 2 - 0.13);
+        building.add(block, roof, door);
+        building.position.set(x, 0, z);
+        addArena(building);
+        addCollider(block, 0.08);
+      }
+
+      for (const [x, z] of [[-18, -54], [18, -56], [54, -12]]) {
+        const tank = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 8, 24), metal);
+        tank.position.set(x, 4, z);
+        tank.castShadow = true;
+        tank.receiveShadow = true;
+        addArena(tank);
+        addCollider(tank, 0.08);
+      }
+
+      for (const [x, z, len, rot] of [[0, -55, 52, Math.PI / 2], [38, -22, 46, 0], [-54, -10, 60, 0]]) {
+        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, len, 18), pipeMat);
+        pipe.position.set(x, 4.8, z);
+        pipe.rotation.z = Math.PI / 2;
+        pipe.rotation.y = rot;
+        pipe.castShadow = true;
+        addArena(pipe);
+      }
+
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(90, 0.45, 34), metal);
+      canopy.position.set(20, 8.7, -44);
+      canopy.receiveShadow = true;
+      addArena(canopy);
     }
 
     function addWater() {
@@ -1628,10 +1793,10 @@
       group.position.set(0.34, -0.36, -0.72);
       group.rotation.set(-0.05, -0.08, 0);
 
-      const gunmetal = new THREE.MeshStandardMaterial({ color: 0x151b21, roughness: 0.46, metalness: 0.55 });
-      const matte = new THREE.MeshStandardMaterial({ color: 0x252d34, roughness: 0.72, metalness: 0.18 });
-      const polymer = new THREE.MeshStandardMaterial({ color: 0x111316, roughness: 0.86, metalness: 0.05 });
-      const brass = new THREE.MeshStandardMaterial({ color: 0xb79756, roughness: 0.44, metalness: 0.45 });
+      const gunmetal = texturedMaterial(0x151b21, 0.46, 0.55, 'metal');
+      const matte = texturedMaterial(0x252d34, 0.72, 0.18, 'metal');
+      const polymer = texturedMaterial(0x111316, 0.86, 0.05, 'wall');
+      const brass = texturedMaterial(0xb79756, 0.44, 0.45, 'metal');
       const glass = new THREE.MeshStandardMaterial({ color: 0x78b9c8, roughness: 0.08, metalness: 0.05, transparent: true, opacity: 0.58 });
 
       const receiver = box(0.48, 0.24, 0.88, 0, 0, -0.06, matte);
@@ -1688,7 +1853,19 @@
       );
       knifeBladeMesh.rotation.x = Math.PI / 2;
       knifeBladeMesh.position.set(0.08, -0.072, -0.48);
-      knifeGroup.add(knifeGrip, knifePommel, knifeCross, knifeBladeMesh);
+      const knifeEdge = new THREE.Mesh(
+        new THREE.BoxGeometry(0.09, 0.022, 0.7),
+        new THREE.MeshStandardMaterial({ color: 0xd7dee0, roughness: 0.2, metalness: 0.86 })
+      );
+      knifeEdge.position.set(0.08, -0.06, -0.82);
+      const knifeTip = new THREE.Mesh(
+        new THREE.ConeGeometry(0.052, 0.18, 4),
+        new THREE.MeshStandardMaterial({ color: 0xe8eef0, roughness: 0.18, metalness: 0.9 })
+      );
+      knifeTip.rotation.x = -Math.PI / 2;
+      knifeTip.rotation.z = Math.PI / 4;
+      knifeTip.position.set(0.08, -0.06, -1.25);
+      knifeGroup.add(knifeGrip, knifePommel, knifeCross, knifeBladeMesh, knifeEdge, knifeTip);
       knifeGroup.rotation.set(-0.24, -0.18, 0.62);
 
       const flash = new THREE.PointLight(0xffc46a, 0, 8);
@@ -1937,24 +2114,42 @@
       for (const part of [p.receiver, p.upper, p.handguard, p.stock, p.grip, p.magazine, p.rail, p.triggerGuard, p.barrel, p.muzzleBrake, p.optic, p.opticGlass, p.sideModule]) {
         part.visible = !knife;
       }
-      p.knifeHandle.visible = false;
-      p.knifeGuard.visible = false;
-      p.knifeBlade.visible = false;
-      p.knifeGroup.visible = knife;
+      p.knifeHandle.visible = knife;
+      p.knifeGuard.visible = knife;
+      p.knifeBlade.visible = knife;
+      p.knifeGroup.visible = false;
       p.leftSleeve.visible = true;
       p.rightSleeve.visible = true;
       p.leftHand.visible = true;
       p.rightHand.visible = true;
       if (knife) {
-        p.leftHand.position.set(-0.12, -0.26, -0.22);
-        p.rightHand.position.set(0.02, -0.1, -0.28);
-        p.rightSleeve.position.set(0.18, -0.23, -0.12);
-        p.leftSleeve.rotation.set(0.3, 0.2, -0.55);
-        p.rightSleeve.rotation.set(0.12, -0.3, 0.72);
+        p.leftSleeve.visible = false;
+        p.leftHand.visible = false;
+        p.rightHand.scale.set(0.78, 0.78, 0.78);
+        p.rightSleeve.scale.set(0.74, 0.74, 0.74);
+        p.rightHand.position.set(0.08, -0.01, -0.2);
+        p.rightHand.rotation.set(0.48, -0.08, 0.36);
+        p.rightSleeve.position.set(0.24, -0.2, 0.08);
+        p.knifeHandle.position.set(-0.02, 0.02, -0.34);
+        p.knifeHandle.rotation.set(-0.72, -0.12, 0.46);
+        p.knifeHandle.scale.set(1.05, 1.05, 1.15);
+        p.knifeGuard.position.set(-0.08, 0.14, -0.52);
+        p.knifeGuard.rotation.copy(p.knifeHandle.rotation);
+        p.knifeGuard.scale.set(1.15, 1, 1);
+        p.knifeBlade.position.set(-0.2, 0.34, -0.92);
+        p.knifeBlade.rotation.copy(p.knifeHandle.rotation);
+        p.knifeBlade.scale.set(1.15, 1.05, 1.35);
+        p.rightSleeve.rotation.set(0.14, -0.22, 0.5);
         return;
       }
+      p.rightHand.scale.set(1, 1, 1);
+      p.rightSleeve.scale.set(1, 1, 1);
+      p.knifeHandle.scale.set(1, 1, 1);
+      p.knifeGuard.scale.set(1, 1, 1);
+      p.knifeBlade.scale.set(1, 1, 1);
       p.leftHand.position.set(-0.22, -0.24, -0.55);
       p.rightHand.position.set(0.25, -0.23, -0.1);
+      p.rightHand.rotation.set(0.35, -0.1, 0.5);
       p.rightSleeve.position.set(0.32, -0.23, 0.02);
       p.leftSleeve.rotation.set(0.25, 0.2, -0.38);
       p.rightSleeve.rotation.set(0.2, -0.2, 0.42);
