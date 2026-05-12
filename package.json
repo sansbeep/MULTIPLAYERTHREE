@@ -1,0 +1,15 @@
+{
+  "name": "multiplayer-three-fps",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multiplayer Three.js FPS prototype with Socket.io networking.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "three": "^0.164.1"
+  }
+}
