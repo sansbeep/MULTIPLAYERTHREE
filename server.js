@@ -42,6 +42,7 @@ function publicPlayer(player) {
     id: player.id,
     name: player.name,
     color: player.color,
+    style: player.style,
     weapon: player.weapon,
     health: player.health,
     score: player.score,
@@ -57,7 +58,7 @@ function publicPlayer(player) {
 
 function publicRound(lobby = DEFAULT_LOBBY) {
   const counts = { battle: 0, coop: 0 };
-  const maps = { hydro: 0, arcade: 0 };
+  const maps = { hydro: 0, arcade: 0, citadel: 0 };
   const voters = [];
   for (const [id, vote] of votes) {
     const player = players.get(id);
@@ -135,7 +136,7 @@ function publicLobby(lobby = DEFAULT_LOBBY) {
     mode: config.mode,
     restricted: config.restricted,
     started: config.started,
-    players: lobbyPlayers.map((player) => ({ id: player.id, name: player.name, color: player.color })),
+    players: lobbyPlayers.map((player) => ({ id: player.id, name: player.name, color: player.color, style: player.style })),
     playerCount: lobbyPlayers.length,
   };
 }
@@ -173,6 +174,7 @@ function publicZombie(zombie) {
     position: zombie.position,
     velocity: zombie.velocity,
     attackAt: zombie.attackAt,
+    type: zombie.type,
   };
 }
 
@@ -187,6 +189,7 @@ io.on('connection', (socket) => {
     name: `Player ${socket.id.slice(0, 4)}`,
     lobby: DEFAULT_LOBBY,
     color: randomColor(),
+    style: 'classic',
     weapon: 'assault',
     health: 100,
     score: 0,
@@ -236,6 +239,24 @@ io.on('connection', (socket) => {
     emitLobbyDirectory();
   });
 
+  socket.on('setCustomization', (customization = {}) => {
+    const current = players.get(socket.id);
+    if (!current) return;
+    if (typeof customization.color === 'string' && /^#[0-9a-f]{6}$/i.test(customization.color)) {
+      current.color = customization.color;
+    }
+    if (typeof customization.style === 'string') {
+      current.style = ['classic', 'scout', 'heavy'].includes(customization.style) ? customization.style : 'classic';
+    }
+    io.to(lobbyRoom(current.lobby)).emit('playerCustomized', {
+      id: socket.id,
+      color: current.color,
+      style: current.style,
+    });
+    emitLobbyState(current.lobby);
+    emitLobbyDirectory();
+  });
+
   socket.on('listLobbies', (callback) => {
     const lobbies = Array.from(lobbySettings.keys())
       .map(publicLobby)
@@ -251,7 +272,7 @@ io.on('connection', (socket) => {
     const config = lobbyConfig(lobbyId);
     config.name = lobbyId;
     config.hostId = socket.id;
-    config.map = settings.map === 'arcade' ? 'arcade' : 'hydro';
+    config.map = sanitizeMap(settings.map);
     config.mode = settings.mode === 'coop' ? 'coop' : 'battle';
     config.restricted = Array.isArray(settings.restricted)
       ? settings.restricted.filter((weapon) => ['shotgun', 'sniper', 'smg', 'dmr', 'launcher'].includes(weapon))
@@ -358,7 +379,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('voteMap', (mapName) => {
-    if (mapName !== 'hydro' && mapName !== 'arcade') return;
+    if (!isValidMap(mapName)) return;
     mapVotes.set(socket.id, mapName);
     currentMap = getWinningMap();
     const current = players.get(socket.id);
@@ -549,11 +570,22 @@ function getWinningVote() {
 function getWinningMap() {
   let hydro = 0;
   let arcade = 0;
+  let citadel = 0;
   for (const vote of mapVotes.values()) {
     if (vote === 'hydro') hydro += 1;
     if (vote === 'arcade') arcade += 1;
+    if (vote === 'citadel') citadel += 1;
   }
+  if (citadel > hydro && citadel >= arcade) return 'citadel';
   return arcade > hydro ? 'arcade' : 'hydro';
+}
+
+function isValidMap(mapName) {
+  return mapName === 'hydro' || mapName === 'arcade' || mapName === 'citadel';
+}
+
+function sanitizeMap(mapName) {
+  return isValidMap(mapName) ? mapName : 'hydro';
 }
 
 function spawnWave() {
@@ -563,13 +595,15 @@ function spawnWave() {
     return;
   }
   round.wave += 1;
-  const count = Math.min(5 + round.wave * 2, 18);
+  const count = Math.min(6 + round.wave * 2, 20);
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2 + Math.random() * 0.6;
     const distance = 62 + Math.random() * 48;
+    const type = round.wave >= 3 && i % 6 === 0 ? 'brute' : i % 4 === 0 ? 'runner' : 'walker';
     const zombie = {
       id: `z${++zombieCounter}`,
-      health: 58 + round.wave * 10,
+      type,
+      health: (type === 'brute' ? 125 : type === 'runner' ? 42 : 62) + round.wave * 12,
       position: { x: Math.cos(angle) * distance, y: 0, z: Math.sin(angle) * distance },
       velocity: { x: 0, y: 0, z: 0 },
       attackAt: 0,
@@ -596,7 +630,8 @@ function updateZombies(delta) {
     }
     if (!nearest) continue;
 
-    const speed = 2.35 + Math.min(round.wave * 0.22, 1.4);
+    const speedBase = zombie.type === 'runner' ? 3.65 : zombie.type === 'brute' ? 1.75 : 2.45;
+    const speed = speedBase + Math.min(round.wave * 0.2, 1.2);
     const dx = nearest.position.x - zombie.position.x;
     const dz = nearest.position.z - zombie.position.z;
     const length = Math.max(0.001, Math.hypot(dx, dz));
@@ -608,7 +643,8 @@ function updateZombies(delta) {
       zombie.position.z += zombie.velocity.z * delta;
     } else if (now - zombie.attackAt > 850) {
       zombie.attackAt = now;
-      nearest.health = Math.max(0, nearest.health - 9);
+      const damage = zombie.type === 'brute' ? 18 : zombie.type === 'runner' ? 7 : 10;
+      nearest.health = Math.max(0, nearest.health - damage);
       if (nearest.health <= 0) {
         nearest.health = 100;
         nearest.position = {

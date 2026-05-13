@@ -116,3 +116,10 @@ npm start
 - Added a menu weapon shop with gun previews, SMG, DMR, and Grenade Launcher unlocks.
 - Added credit rewards for player kills and zombie kills.
 - Added a menu-first lobby flow with create/find lobby, host-selected map, gun restrictions, start, and kick support.
+
+### v1.4 - Customization, Skins, and Trigger Citadel
+- Added saved character customization with color and body style options.
+- Added purchasable weapon skins that use credits and persist per account.
+- Added an inventory panel for owned guns and equipped skins.
+- Added Trigger Citadel, a deterministic floating block ruin map.
+- Synced customized player colors and styles to other clients.

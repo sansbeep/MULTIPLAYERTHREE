@@ -645,6 +645,81 @@
       font-size: 13px;
     }
 
+    #inventoryPanel {
+      display: grid;
+      gap: 7px;
+      margin: 8px 0;
+      padding: 10px;
+      border: 1px solid rgba(79, 218, 176, 0.28);
+      background: rgba(79, 218, 176, 0.07);
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 13px;
+    }
+
+    #inventoryPanel strong {
+      color: #bffff0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    #ownedWeaponsList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    #ownedWeaponsList span {
+      padding: 5px 7px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    #customizePanel,
+    #skinShop {
+      display: grid;
+      gap: 8px;
+      margin: 8px 0;
+      padding: 10px;
+      border: 1px solid rgba(255, 226, 179, 0.2);
+      background: rgba(255, 255, 255, 0.055);
+      font-size: 13px;
+    }
+
+    #customizePanel strong,
+    #skinShop strong {
+      color: #ffe2b3;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .customRow,
+    .skinGrid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .skinButton {
+      width: auto !important;
+      min-width: 92px;
+      margin: 0 !important;
+      padding: 0 10px;
+      border-radius: 0 !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #fff !important;
+      border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    }
+
+    .skinButton.owned {
+      border-color: rgba(79, 218, 176, 0.7) !important;
+    }
+
+    .skinButton.active {
+      border-color: rgba(255, 226, 179, 0.9) !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 226, 179, 0.25);
+    }
+
     #menuShop {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -700,6 +775,23 @@
       position: relative;
       height: 42px;
       margin: 4px 0;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 12px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .gunPreview::after {
+      content: "";
+      position: absolute;
+      left: 94px;
+      top: 29px;
+      width: 18px;
+      height: 7px;
+      border: 2px solid rgba(20, 24, 28, 0.9);
+      border-top: 0;
     }
 
     .gunPreview span {
@@ -734,6 +826,12 @@
       display: grid;
       gap: 8px;
       margin-top: 12px;
+      padding: 12px;
+      min-height: 260px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(116, 96, 180, 0.22), transparent 38%),
+        linear-gradient(180deg, rgba(7, 8, 16, 0.84), rgba(2, 3, 7, 0.9));
+      border: 1px solid rgba(192, 178, 255, 0.22);
     }
 
     #lobbyList,
@@ -746,6 +844,14 @@
       font-size: 13px;
     }
 
+    #lobbyList {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      max-height: none;
+      min-height: 210px;
+      align-items: center;
+      perspective: 760px;
+    }
+
     .lobbyEntry,
     .memberEntry {
       display: flex;
@@ -755,6 +861,46 @@
       padding: 7px 8px;
       border: 1px solid rgba(255, 255, 255, 0.14);
       background: rgba(255, 255, 255, 0.06);
+    }
+
+    .lobbyEntry.portal {
+      min-height: 118px;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      color: #eef5ff;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
+        radial-gradient(circle at 50% 62%, rgba(117, 236, 255, 0.34), rgba(110, 72, 210, 0.2) 48%, rgba(0, 0, 0, 0.2) 70%);
+      border: 2px solid rgba(154, 225, 255, 0.34);
+      box-shadow: 0 0 22px rgba(82, 173, 255, 0.18);
+      cursor: pointer;
+      transform: rotateX(3deg);
+    }
+
+    .lobbyEntry.portal::before {
+      content: "";
+      width: 44px;
+      height: 56px;
+      border: 4px solid rgba(170, 235, 255, 0.88);
+      background: linear-gradient(180deg, rgba(106, 76, 230, 0.62), rgba(42, 219, 255, 0.24));
+      box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.2), 0 0 18px rgba(98, 208, 255, 0.38);
+    }
+
+    .lobbyEntry.portal.empty {
+      opacity: 0.7;
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .lobbyEntry.portal.mega {
+      grid-column: span 2;
+      background:
+        radial-gradient(circle at 50% 60%, rgba(255, 226, 151, 0.46), rgba(124, 76, 236, 0.25) 50%, rgba(0, 0, 0, 0.22) 76%);
+      border-color: rgba(255, 226, 151, 0.78);
+    }
+
+    .lobbyEntry.portal button {
+      display: none;
     }
 
     .lobbyEntry button,
@@ -1109,6 +1255,30 @@
       cursor: pointer;
     }
 
+    #saveAccountRow,
+    #accountStatus {
+      grid-column: 1 / -1;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+      text-align: left;
+    }
+
+    #savedAccounts {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #savedAccounts button {
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      padding: 7px 11px;
+      cursor: pointer;
+    }
+
     @keyframes gunIntro {
       from {
         opacity: 0;
@@ -1249,6 +1419,7 @@
       <div id="mapVoteButtons">
         <button data-map="hydro">Trigger Forest</button>
         <button data-map="arcade">Trigger Ship</button>
+        <button data-map="citadel">Trigger Citadel</button>
       </div>
     </div>
     <div id="grenadeHud">Grenades: <strong id="grenades">3</strong> · G</div>
@@ -1260,6 +1431,7 @@
         <div class="mapPick">
           <button class="mapButton active" data-map="hydro" type="button">Trigger Forest<small>Dense block woods, rocks, mine cover.</small></button>
           <button class="mapButton" data-map="arcade" type="button">Trigger Ship<small>Blocky cargo ship over deep water.</small></button>
+          <button class="mapButton" data-map="citadel" type="button">Trigger Citadel<small>Floating block ruins in a glowing void.</small></button>
         </div>
         <div id="lobbyMenu">
           <div class="settingRow">
@@ -1275,6 +1447,28 @@
         <div id="profileSummary">
           <span>Profile: <strong id="profileName">Guest</strong></span>
           <span>Credits: <strong id="profileCredits">0</strong></span>
+        </div>
+        <div id="inventoryPanel">
+          <strong>Inventory</strong>
+          <div id="ownedWeaponsList">Assault Rifle</div>
+        </div>
+        <div id="customizePanel">
+          <strong>Character</strong>
+          <div class="customRow">
+            <label>Color <input id="characterColor" type="color" value="#59c3ff"></label>
+            <label>Body
+              <select id="characterStyle">
+                <option value="classic">Classic</option>
+                <option value="scout">Scout</option>
+                <option value="heavy">Heavy</option>
+              </select>
+            </label>
+            <button id="saveCustomizationButton" type="button">Apply</button>
+          </div>
+        </div>
+        <div id="skinShop">
+          <strong>Weapon Skins</strong>
+          <div id="skinButtons" class="skinGrid"></div>
         </div>
         <div id="menuShop" aria-label="Weapon shop">
           <button class="shopCard owned equipped" data-buy="assault" type="button">
@@ -1324,8 +1518,13 @@
       <p>Blocky arenas, detailed guns, private lobbies. Choose a lobby, squad up, then vote your way into the forest or the ship.</p>
       <div id="titleMenu">
         <input id="introUsernameInput" maxlength="18" placeholder="Username">
+        <input id="introPasswordInput" maxlength="32" type="password" placeholder="Password">
+        <label id="saveAccountRow"><input id="saveAccountToggle" type="checkbox" checked> Save this account on this device</label>
+        <button id="introStart" type="button">Log In</button>
+        <button id="createAccountButton" type="button">Create New Account</button>
+        <div id="accountStatus"></div>
+        <div id="savedAccounts"></div>
         <input id="lobbyInput" maxlength="24" value="public" placeholder="Lobby name">
-        <button id="introStart" type="button">Enter Lobby</button>
         <div id="lobbyPresets">
           <button type="button" data-lobby="public">Public</button>
           <button type="button" data-lobby="forest-party">Forest Party</button>
@@ -1524,6 +1723,13 @@
     };
 
     const weaponCosts = { assault: 0, smg: 150, shotgun: 250, dmr: 350, sniper: 500, launcher: 800 };
+    const weaponSkins = {
+      default: { label: 'Default', cost: 0, color: null },
+      neon: { label: 'Neon Mint', cost: 220, color: '#45ffc8' },
+      sunset: { label: 'Sunset Gold', cost: 260, color: '#ffb347' },
+      void: { label: 'Void Violet', cost: 360, color: '#8b5cff' },
+      ruby: { label: 'Ruby Grid', cost: 420, color: '#ff4b5f' },
+    };
     const weaponDescriptions = {
       assault: 'Starter auto rifle. Always unlocked.',
       smg: 'Fast close-range spray.',
@@ -1532,7 +1738,7 @@
       sniper: 'Best scope and highest damage.',
       launcher: 'Arc explosive shells into cover.',
     };
-    const profile = { username: '', credits: 0, owned: ['assault'] };
+    const profile = { username: '', credits: 0, owned: ['assault'], ownedSkins: ['default'], activeSkin: 'default', characterColor: '#59c3ff', characterStyle: 'classic' };
     let currentLobbyState = null;
     let gameStarted = false;
 
@@ -1581,6 +1787,11 @@
       joinButton: document.getElementById('joinButton'),
       profileName: document.getElementById('profileName'),
       profileCredits: document.getElementById('profileCredits'),
+      ownedWeaponsList: document.getElementById('ownedWeaponsList'),
+      characterColor: document.getElementById('characterColor'),
+      characterStyle: document.getElementById('characterStyle'),
+      saveCustomizationButton: document.getElementById('saveCustomizationButton'),
+      skinButtons: document.getElementById('skinButtons'),
       menuShopButtons: Array.from(document.querySelectorAll('#menuShop .shopCard')),
       lobbyList: document.getElementById('lobbyList'),
       lobbyMembers: document.getElementById('lobbyMembers'),
@@ -1594,7 +1805,12 @@
       deathScreen: document.getElementById('deathScreen'),
       introOverlay: document.getElementById('introOverlay'),
       introStart: document.getElementById('introStart'),
+      createAccountButton: document.getElementById('createAccountButton'),
       introUsernameInput: document.getElementById('introUsernameInput'),
+      introPasswordInput: document.getElementById('introPasswordInput'),
+      saveAccountToggle: document.getElementById('saveAccountToggle'),
+      accountStatus: document.getElementById('accountStatus'),
+      savedAccounts: document.getElementById('savedAccounts'),
       lobbyInput: document.getElementById('lobbyInput'),
       lobbyPresets: Array.from(document.querySelectorAll('#lobbyPresets button')),
       scope: document.getElementById('scope'),
@@ -1749,6 +1965,7 @@
 
     loadSettings();
     applySettings();
+    renderSavedAccounts();
 
     function requestPing() {
       const sent = performance.now();
@@ -1762,24 +1979,130 @@
       return `trigger-bloxxy-profile:${String(name || 'guest').toLowerCase()}`;
     }
 
+    function accountsKey() {
+      return 'trigger-bloxxy-accounts';
+    }
+
+    function readAccounts() {
+      try {
+        const accounts = JSON.parse(window.localStorage.getItem(accountsKey()) || '{}');
+        return accounts && typeof accounts === 'object' ? accounts : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function writeAccounts(accounts) {
+      window.localStorage.setItem(accountsKey(), JSON.stringify(accounts));
+      renderSavedAccounts();
+    }
+
+    function renderSavedAccounts() {
+      const accounts = readAccounts();
+      ui.savedAccounts.innerHTML = '';
+      const saved = Object.entries(accounts).filter(([, account]) => account.saved);
+      if (!saved.length) return;
+      for (const [name] of saved) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = name;
+        button.addEventListener('click', () => {
+          ui.introUsernameInput.value = name;
+          ui.introPasswordInput.value = '';
+          ui.accountStatus.textContent = 'Enter password to log in.';
+        });
+        ui.savedAccounts.appendChild(button);
+      }
+    }
+
+    function createAccount() {
+      const name = ui.introUsernameInput.value.trim().replace(/[^\w .-]/g, '').slice(0, 18);
+      const password = ui.introPasswordInput.value.trim();
+      if (!name || !password) {
+        ui.accountStatus.textContent = 'Choose a username and password first.';
+        return;
+      }
+      const accounts = readAccounts();
+      if (accounts[name]) {
+        ui.accountStatus.textContent = 'That account already exists. Log in instead.';
+        return;
+      }
+      accounts[name] = { password, saved: ui.saveAccountToggle.checked, createdAt: Date.now() };
+      writeAccounts(accounts);
+      ui.accountStatus.textContent = `Created ${name}. You are logged in.`;
+      finishAccountLogin(name);
+    }
+
+    function loginAccount() {
+      const name = ui.introUsernameInput.value.trim().replace(/[^\w .-]/g, '').slice(0, 18);
+      const password = ui.introPasswordInput.value.trim();
+      const accounts = readAccounts();
+      if (!name || !password) {
+        ui.accountStatus.textContent = 'Username and password required.';
+        return;
+      }
+      if (!accounts[name]) {
+        ui.accountStatus.textContent = 'No account found. Use Create New Account.';
+        return;
+      }
+      if (accounts[name].password !== password) {
+        ui.accountStatus.textContent = 'Wrong password.';
+        return;
+      }
+      accounts[name].saved = ui.saveAccountToggle.checked;
+      writeAccounts(accounts);
+      ui.accountStatus.textContent = `Logged in as ${name}.`;
+      finishAccountLogin(name);
+    }
+
+    function finishAccountLogin(name) {
+      loadProfile(name);
+      ui.usernameInput.value = name;
+      socket.emit('setName', name);
+      selectedLobby = sanitizeLobbyName(ui.lobbyInput.value);
+      socket.emit('joinLobby', selectedLobby, () => {
+        ui.introOverlay.style.display = 'none';
+        ui.loginOverlay.style.display = 'grid';
+        ui.notice.style.display = 'none';
+        socket.emit('listLobbies', renderLobbyList);
+      });
+    }
+
     function loadProfile(name) {
       profile.username = String(name || '').trim().slice(0, 18) || 'Player';
       profile.credits = 0;
       profile.owned = ['assault'];
+      profile.ownedSkins = ['default'];
+      profile.activeSkin = 'default';
+      profile.characterColor = '#59c3ff';
+      profile.characterStyle = 'classic';
       try {
         const stored = JSON.parse(window.localStorage.getItem(profileKey()) || '{}');
         if (Number.isFinite(stored.credits)) profile.credits = Math.max(0, stored.credits);
         if (Array.isArray(stored.owned)) profile.owned = Array.from(new Set(['assault', ...stored.owned.filter((weapon) => weapons[weapon])]));
+        if (Array.isArray(stored.ownedSkins)) profile.ownedSkins = Array.from(new Set(['default', ...stored.ownedSkins.filter((skin) => weaponSkins[skin])]));
+        if (stored.activeSkin && weaponSkins[stored.activeSkin]) profile.activeSkin = stored.activeSkin;
+        if (typeof stored.characterColor === 'string' && /^#[0-9a-f]{6}$/i.test(stored.characterColor)) profile.characterColor = stored.characterColor;
+        if (['classic', 'scout', 'heavy'].includes(stored.characterStyle)) profile.characterStyle = stored.characterStyle;
       } catch (error) {
         profile.owned = ['assault'];
       }
+      localPlayer.color = profile.characterColor;
       updateProfileUi();
       updateWeaponLocks();
+      applyCustomization();
     }
 
     function saveProfile() {
       if (!profile.username) return;
-      window.localStorage.setItem(profileKey(), JSON.stringify({ credits: profile.credits, owned: profile.owned }));
+      window.localStorage.setItem(profileKey(), JSON.stringify({
+        credits: profile.credits,
+        owned: profile.owned,
+        ownedSkins: profile.ownedSkins,
+        activeSkin: profile.activeSkin,
+        characterColor: profile.characterColor,
+        characterStyle: profile.characterStyle,
+      }));
       updateProfileUi();
     }
 
@@ -1814,9 +2137,44 @@
       updateProfileUi();
     }
 
+    function buyOrEquipSkin(name) {
+      const skin = weaponSkins[name];
+      if (!skin) return;
+      if (!profile.ownedSkins.includes(name)) {
+        if (profile.credits < skin.cost) {
+          ui.status.textContent = `${skin.label} needs ${skin.cost} credits`;
+          return;
+        }
+        profile.credits -= skin.cost;
+        profile.ownedSkins.push(name);
+      }
+      profile.activeSkin = name;
+      saveProfile();
+      tintLocalWeapon();
+    }
+
+    function applyCustomization() {
+      profile.characterColor = ui.characterColor.value;
+      profile.characterStyle = ui.characterStyle.value;
+      localPlayer.color = profile.characterColor;
+      saveProfile();
+      socket.emit('setCustomization', { color: profile.characterColor, style: profile.characterStyle });
+      tintLocalWeapon();
+    }
+
     function updateProfileUi() {
       if (ui.profileName) ui.profileName.textContent = profile.username || 'Guest';
       if (ui.profileCredits) ui.profileCredits.textContent = profile.credits;
+      if (ui.characterColor) ui.characterColor.value = profile.characterColor;
+      if (ui.characterStyle) ui.characterStyle.value = profile.characterStyle;
+      if (ui.ownedWeaponsList) {
+        ui.ownedWeaponsList.innerHTML = '';
+        for (const name of profile.owned) {
+          const chip = document.createElement('span');
+          chip.textContent = weapons[name] ? weapons[name].label : name;
+          ui.ownedWeaponsList.appendChild(chip);
+        }
+      }
       ui.menuShopButtons.forEach((button) => {
         const name = button.dataset.buy;
         const owned = ownsWeapon(name);
@@ -1827,29 +2185,66 @@
         const price = button.querySelector('.shopPrice');
         if (price) price.textContent = owned ? (allowed ? 'Owned' : 'Restricted') : `${weaponCosts[name] || 0} credits`;
       });
+      if (ui.skinButtons) {
+        ui.skinButtons.innerHTML = '';
+        for (const [name, skin] of Object.entries(weaponSkins)) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'skinButton';
+          button.textContent = profile.ownedSkins.includes(name) ? skin.label : `${skin.label} ${skin.cost}`;
+          button.classList.toggle('owned', profile.ownedSkins.includes(name));
+          button.classList.toggle('active', profile.activeSkin === name);
+          if (skin.color) button.style.background = `linear-gradient(135deg, ${skin.color}, rgba(255,255,255,0.12))`;
+          button.addEventListener('click', () => buyOrEquipSkin(name));
+          ui.skinButtons.appendChild(button);
+        }
+      }
     }
 
     function updateWeaponLocks() {
       ui.slots.forEach((slot) => {
-        slot.classList.toggle('locked', !isWeaponAllowed(slot.dataset.weapon));
+        const owned = ownsWeapon(slot.dataset.weapon);
+        slot.style.display = owned ? '' : 'none';
+        slot.classList.toggle('locked', owned && !isWeaponAllowed(slot.dataset.weapon));
       });
       updateProfileUi();
     }
 
     function renderLobbyList(lobbies = []) {
       ui.lobbyList.innerHTML = '';
-      if (!lobbies.length) {
-        ui.lobbyList.textContent = 'No open lobbies yet.';
-        return;
-      }
-      for (const lobby of lobbies) {
+      const mega = document.createElement('div');
+      mega.className = 'lobbyEntry portal mega';
+      mega.innerHTML = `<strong>Mega Portal</strong><span>Open server</span><small>Anyone can join</small>`;
+      mega.addEventListener('click', () => {
+        gameStarted = true;
+        socket.emit('joinLobby', 'mega-server');
+        ui.loginOverlay.style.display = 'none';
+        ui.notice.style.display = 'block';
+      });
+      ui.lobbyList.appendChild(mega);
+      for (let i = 0; i < 10; i++) {
+        const emptyPortal = !lobbies[i];
+        const lobby = lobbies[i] || { id: `portal-${i + 1}`, name: `Empty Portal ${i + 1}`, map: activeMap, playerCount: 0 };
         const row = document.createElement('div');
-        row.className = 'lobbyEntry';
-        row.innerHTML = `<span>${lobby.name} · ${lobby.map === 'arcade' ? 'Trigger Ship' : 'Trigger Forest'} · ${lobby.playerCount} players</span>`;
+        row.className = `lobbyEntry portal${emptyPortal ? ' empty' : ''}`;
+        row.innerHTML = `<strong>${lobby.name}</strong><span>${lobby.playerCount} players</span><small>${mapDisplayName(lobby.map)}</small>`;
         const join = document.createElement('button');
         join.type = 'button';
         join.textContent = 'Join';
-        join.addEventListener('click', () => socket.emit('joinLobby', lobby.id));
+        join.addEventListener('click', (event) => {
+          event.stopPropagation();
+          if (emptyPortal) {
+            socket.emit('createLobby', {
+              name: `${profile.username || 'Player'} Portal ${i + 1}`,
+              map: activeMap,
+              mode: localPlayer.vote || 'battle',
+              restricted: [],
+            }, renderLobbyMembers);
+          } else {
+            socket.emit('joinLobby', lobby.id);
+          }
+        });
+        row.addEventListener('click', () => join.click());
         row.appendChild(join);
         ui.lobbyList.appendChild(row);
       }
@@ -1897,11 +2292,15 @@
     });
 
     ui.introStart.addEventListener('click', () => {
-      enterLobby();
+      loginAccount();
     });
+    ui.createAccountButton.addEventListener('click', createAccount);
 
     ui.lobbyInput.addEventListener('keydown', (event) => {
-      if (event.code === 'Enter') enterLobby();
+      if (event.code === 'Enter') loginAccount();
+    });
+    ui.introPasswordInput.addEventListener('keydown', (event) => {
+      if (event.code === 'Enter') loginAccount();
     });
 
     ui.lobbyPresets.forEach((button) => {
@@ -1995,6 +2394,21 @@
       if (target) target.name = name;
       const rig = playerMeshes.get(id);
       if (rig) updateNameLabel(rig, name);
+    });
+    socket.on('playerCustomized', ({ id, color, style }) => {
+      const target = playerTargets.get(id);
+      if (target) {
+        target.color = color || target.color;
+        target.style = style || target.style;
+      }
+      if (id === localPlayer.id) {
+        localPlayer.color = color || localPlayer.color;
+        tintLocalWeapon();
+        return;
+      }
+      removeRemotePlayer(id);
+      const updated = target || { id, color, style, name: playerNames.get(id), position: { x: 0, y: 2, z: 0 }, rotation: { y: 0 }, velocity: { x: 0, y: 0, z: 0 } };
+      addOrUpdateRemotePlayer(updated);
     });
     socket.on('playerCount', (count) => ui.playersOnline.textContent = count);
     socket.on('state', (players) => {
@@ -2129,6 +2543,12 @@
     ui.menuShopButtons.forEach((button) => {
       button.addEventListener('click', () => buyOrEquipWeapon(button.dataset.buy));
     });
+    ui.saveCustomizationButton.addEventListener('click', applyCustomization);
+    ui.characterColor.addEventListener('input', () => {
+      profile.characterColor = ui.characterColor.value;
+      localPlayer.color = profile.characterColor;
+      tintLocalWeapon();
+    });
     ui.createLobbyButton.addEventListener('click', () => {
       const restricted = [];
       if (ui.restrictSniper.checked) restricted.push('sniper');
@@ -2178,22 +2598,6 @@
     animate();
     requestPing();
     window.setInterval(requestPing, 3000);
-
-    function enterLobby() {
-      const clean = ui.introUsernameInput.value.trim().replace(/[^\w .-]/g, '').slice(0, 18);
-      if (!clean) {
-        ui.introUsernameInput.placeholder = 'Username required';
-        return;
-      }
-      loadProfile(clean);
-      ui.usernameInput.value = clean;
-      socket.emit('setName', clean);
-      selectedLobby = sanitizeLobbyName(ui.lobbyInput.value);
-      ui.lobbyInput.value = selectedLobby;
-      socket.emit('joinLobby', selectedLobby, () => {
-        ui.introOverlay.style.display = 'none';
-      });
-    }
 
     function sanitizeLobbyName(value) {
       return String(value || 'public').replace(/[^\w -]/g, '').trim().slice(0, 24) || 'public';
@@ -2311,7 +2715,7 @@
     }
 
     function setMap(mapName) {
-      const nextMap = mapName === 'arcade' ? 'arcade' : 'hydro';
+      const nextMap = mapName === 'arcade' || mapName === 'citadel' ? mapName : 'hydro';
       if (activeMap === nextMap && arenaRoot.children.length) return;
       activeMap = nextMap;
       ui.mapButtons.forEach((button) => button.classList.toggle('active', button.dataset.map === activeMap));
@@ -2321,11 +2725,14 @@
 
     function createArena() {
       const arcade = activeMap === 'arcade';
+      const citadel = activeMap === 'citadel';
       setMapSeed(activeMap);
-      scene.background = new THREE.Color(arcade ? 0xd7c9d8 : 0x9bb5bd);
-      scene.fog = new THREE.Fog(arcade ? 0xd7c9d8 : 0x9bb5bd, 38, 165);
+      scene.background = new THREE.Color(citadel ? 0x141426 : arcade ? 0xd7c9d8 : 0x9bb5bd);
+      scene.fog = new THREE.Fog(citadel ? 0x141426 : arcade ? 0xd7c9d8 : 0x9bb5bd, 38, citadel ? 210 : 165);
 
-      if (arcade) {
+      if (citadel) {
+        addTriggerCitadel();
+      } else if (arcade) {
         addTriggerShip();
       } else {
         addTriggerForest();
@@ -2525,6 +2932,69 @@
         waterSurfaces.push(mesh);
         addArena(mesh);
       }
+    }
+
+    function addTriggerCitadel() {
+      scene.background = new THREE.Color(0x171529);
+      scene.fog = new THREE.Fog(0x171529, 36, 230);
+      const stone = texturedMaterial(0x6f6a82, 0.9, 0.04, 'concrete');
+      const darkStone = texturedMaterial(0x343147, 0.92, 0.06, 'concrete');
+      const crystalMat = new THREE.MeshStandardMaterial({ color: 0x79e7ff, emissive: 0x1d6d92, emissiveIntensity: 0.75, roughness: 0.22, metalness: 0.05, transparent: true, opacity: 0.78 });
+      const gold = texturedMaterial(0xd7a84a, 0.62, 0.22, 'metal');
+
+      const base = new THREE.Mesh(new THREE.BoxGeometry(150, 1.4, 150), stone);
+      base.position.y = 0;
+      base.receiveShadow = true;
+      addArena(base);
+      terrainSurfaces.push({ type: 'bridge', x1: -75, x2: 75, z1: -75, z2: 75, height: 0.75 });
+
+      for (const [x, z, w, d] of [[0, 0, 42, 42], [-78, 0, 42, 28], [78, 0, 42, 28], [0, -78, 28, 42], [0, 78, 28, 42]]) {
+        const platform = new THREE.Mesh(new THREE.BoxGeometry(w, 1.2, d), stone);
+        platform.position.set(x, 1.4, z);
+        addArena(platform);
+        addCollider(platform, 0.03, { standable: false });
+        terrainSurfaces.push({ type: 'bridge', x1: x - w / 2, x2: x + w / 2, z1: z - d / 2, z2: z + d / 2, height: 2.05 });
+      }
+
+      for (const [x, z] of [[-58, -58], [58, -58], [-58, 58], [58, 58], [0, 0]]) {
+        const tower = new THREE.Group();
+        const shaft = new THREE.Mesh(new THREE.BoxGeometry(12, 26, 12), darkStone);
+        shaft.position.y = 14.8;
+        const cap = new THREE.Mesh(new THREE.BoxGeometry(16, 4, 16), stone);
+        cap.position.y = 29.8;
+        const beacon = new THREE.Mesh(new THREE.OctahedronGeometry(4, 0), crystalMat);
+        beacon.position.y = 35;
+        tower.add(shaft, cap, beacon);
+        tower.position.set(x, 0, z);
+        addArena(tower);
+        addCollider(shaft, 0.04);
+        addCollider(cap, 0.04);
+      }
+
+      for (let i = 0; i < 42; i++) {
+        const size = 2 + rand() * 4;
+        const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(size, 0), crystalMat.clone());
+        crystal.position.set((rand() - 0.5) * 138, size * 0.65 + 2, (rand() - 0.5) * 138);
+        crystal.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
+        crystal.castShadow = true;
+        addArena(crystal);
+        if (i % 2 === 0) addCollider(crystal, 0.04);
+      }
+
+      for (let i = 0; i < 34; i++) {
+        const block = new THREE.Mesh(new THREE.BoxGeometry(4 + rand() * 8, 2 + rand() * 5, 4 + rand() * 8), i % 4 === 0 ? gold : darkStone);
+        block.position.set((rand() - 0.5) * 160, block.geometry.parameters.height / 2 + 2.05, (rand() - 0.5) * 160);
+        block.rotation.y = Math.round(rand() * 3) * Math.PI / 2;
+        block.castShadow = true;
+        block.receiveShadow = true;
+        addArena(block);
+        addCollider(block, 0.04);
+      }
+
+      for (const [x, z] of [[-42, 0], [42, 0], [0, -42], [0, 42], [-94, 0], [94, 0]]) addHealthPickup(x, z);
+      const portalLight = new THREE.PointLight(0x81eaff, 3.2, 120, 1.6);
+      portalLight.position.set(0, 28, 0);
+      addArena(portalLight);
     }
 
     function addHydroWarehouse() {
@@ -3345,6 +3815,7 @@
     function createRemoteRig(player) {
       const root = new THREE.Group();
       const color = new THREE.Color(player.color || '#59c3ff');
+      const style = player.style || 'classic';
       const armorMat = new THREE.MeshStandardMaterial({ color, roughness: 0.58, metalness: 0.18 });
       const clothMat = new THREE.MeshStandardMaterial({ color: 0x2b3034, roughness: 0.85 });
       const darkMat = new THREE.MeshStandardMaterial({ color: 0x11151a, roughness: 0.72, metalness: 0.12 });
@@ -3352,6 +3823,8 @@
 
       const pelvis = box(0.78, 0.34, 0.44, 0, 0.76, 0.02, clothMat);
       const torso = box(0.9, 0.9, 0.48, 0, 1.32, 0, armorMat);
+      if (style === 'scout') torso.scale.set(0.86, 1.04, 0.84);
+      if (style === 'heavy') torso.scale.set(1.16, 1.06, 1.12);
       torso.rotation.x = -0.06;
       const chestPlate = box(0.68, 0.5, 0.08, 0, 1.42, -0.26, darkMat);
       const neck = cylinder(0.16, 0.16, 0.16, 0, 1.84, 0, clothMat);
@@ -3369,6 +3842,13 @@
       const backpack = box(0.58, 0.66, 0.22, 0, 1.35, 0.36, darkMat);
       const shoulderL = box(0.34, 0.22, 0.34, -0.56, 1.66, -0.02, armorMat);
       const shoulderR = box(0.34, 0.22, 0.34, 0.56, 1.66, -0.02, armorMat);
+      if (style === 'heavy') {
+        shoulderL.scale.set(1.25, 1.2, 1.25);
+        shoulderR.scale.set(1.25, 1.2, 1.25);
+      }
+      if (style === 'scout') {
+        backpack.scale.set(0.72, 0.72, 0.72);
+      }
       const kneeL = box(0.24, 0.16, 0.24, -0.25, 0.62, -0.13, armorMat);
       const kneeR = box(0.24, 0.16, 0.24, 0.25, 0.62, -0.13, armorMat);
 
@@ -3420,6 +3900,12 @@
       playerTargets.delete(id);
     }
 
+    function mapDisplayName(mapName = activeMap) {
+      if (mapName === 'arcade') return 'Trigger Ship';
+      if (mapName === 'citadel') return 'Trigger Citadel';
+      return 'Trigger Forest';
+    }
+
     function updateRoundUi(round) {
       if (!round) return;
       const previousPhase = currentRound ? currentRound.phase : null;
@@ -3446,7 +3932,7 @@
         ? voters.map((voter) => `${voter.name}: ${voter.vote === 'coop' ? 'Co-Op' : 'Battle'}`).join(' | ')
         : 'No votes yet';
       const remaining = Math.max(0, Math.ceil(((round.endsAt || Date.now()) - Date.now()) / 1000));
-      const mapName = activeMap === 'arcade' ? 'Trigger Ship' : 'Trigger Forest';
+      const mapName = mapDisplayName(activeMap);
       if (round.phase === 'voting') {
         ui.roundTitle.textContent = `Round Vote - ${remaining}s - ${mapName}`;
         ui.roundStatus.textContent = 'Choose mode and map';
@@ -3466,7 +3952,7 @@
         seen.add(zombie.id);
         let rig = zombies.get(zombie.id);
         if (!rig) {
-          rig = createZombieRig();
+          rig = createZombieRig(zombie.type);
           zombies.set(zombie.id, rig);
           scene.add(rig.root);
           rig.root.traverse((object) => object.userData.zombieId = zombie.id);
@@ -3479,12 +3965,15 @@
       }
     }
 
-    function createZombieRig() {
+    function createZombieRig(type = 'walker') {
       const root = new THREE.Group();
-      const skin = new THREE.MeshStandardMaterial({ color: 0x6f8a55, roughness: 0.9 });
-      const cloth = new THREE.MeshStandardMaterial({ color: 0x3a332d, roughness: 0.95 });
-      const glow = new THREE.MeshBasicMaterial({ color: 0xff6848 });
-      const body = part(new THREE.BoxGeometry(0.78, 1.0, 0.42), cloth, 0, 1.15, 0);
+      const brute = type === 'brute';
+      const runner = type === 'runner';
+      const skin = new THREE.MeshStandardMaterial({ color: brute ? 0x8a6b55 : runner ? 0x789d58 : 0x6f8a55, roughness: 0.9 });
+      const cloth = new THREE.MeshStandardMaterial({ color: brute ? 0x4a332b : 0x3a332d, roughness: 0.95 });
+      const glow = new THREE.MeshBasicMaterial({ color: runner ? 0xffd24c : brute ? 0xff4238 : 0xff6848 });
+      const scale = brute ? 1.35 : runner ? 0.84 : 1;
+      const body = part(new THREE.BoxGeometry(0.78 * scale, 1.0 * scale, 0.42 * scale), cloth, 0, 1.15 * scale, 0);
       const head = part(new THREE.BoxGeometry(0.46, 0.42, 0.42), skin, 0, 1.86, -0.02);
       const eyeL = part(new THREE.BoxGeometry(0.07, 0.06, 0.035), glow, -0.1, 1.88, -0.24);
       const eyeR = part(new THREE.BoxGeometry(0.07, 0.06, 0.035), glow, 0.1, 1.88, -0.24);
@@ -3493,6 +3982,7 @@
       const leftLeg = part(new THREE.BoxGeometry(0.2, 0.72, 0.18), cloth, -0.22, 0.36, 0);
       const rightLeg = part(new THREE.BoxGeometry(0.2, 0.72, 0.18), cloth, 0.22, 0.36, 0);
       root.add(body, head, eyeL, eyeR, leftArm, rightArm, leftLeg, rightLeg);
+      root.scale.setScalar(scale);
       return { root, body, head, leftArm, rightArm, leftLeg, rightLeg, target: null };
 
       function part(geometry, material, x, y, z) {
@@ -3951,7 +4441,8 @@
 
     function tintLocalWeapon() {
       if (!weaponModel || !weaponModel.parts) return;
-      const accent = new THREE.Color(localPlayer.color || '#59c3ff');
+      const skin = weaponSkins[profile.activeSkin] || weaponSkins.default;
+      const accent = new THREE.Color(skin.color || localPlayer.color || '#59c3ff');
       for (const part of [weaponModel.parts.receiver, weaponModel.parts.handguard, weaponModel.parts.stock, weaponModel.parts.sideModule]) {
         if (part && part.material && part.material.color) part.material.color.copy(accent).lerp(new THREE.Color(0x101418), 0.34);
       }
