@@ -27,6 +27,7 @@ const mapVotes = new Map();
 const zombies = new Map();
 const playerSettings = new Map();
 const DEFAULT_LOBBY = 'public';
+const lobbySettings = new Map();
 let zombieCounter = 0;
 let currentMap = 'hydro';
 let round = {
@@ -105,6 +106,47 @@ function playersInLobby(lobby = DEFAULT_LOBBY) {
   return Array.from(players.values()).filter((player) => player.lobby === lobby);
 }
 
+function lobbyConfig(lobby = DEFAULT_LOBBY) {
+  const id = sanitizeLobby(lobby);
+  if (!lobbySettings.has(id)) {
+    lobbySettings.set(id, {
+      id,
+      name: id,
+      hostId: null,
+      map: 'hydro',
+      mode: 'battle',
+      restricted: [],
+      started: false,
+      createdAt: Date.now(),
+    });
+  }
+  return lobbySettings.get(id);
+}
+
+function publicLobby(lobby = DEFAULT_LOBBY) {
+  const config = lobbyConfig(lobby);
+  const lobbyPlayers = playersInLobby(config.id);
+  return {
+    id: config.id,
+    name: config.name,
+    hostId: config.hostId,
+    hostName: players.get(config.hostId)?.name || 'Open',
+    map: config.map,
+    mode: config.mode,
+    restricted: config.restricted,
+    started: config.started,
+    players: lobbyPlayers.map((player) => ({ id: player.id, name: player.name, color: player.color })),
+    playerCount: lobbyPlayers.length,
+  };
+}
+
+function emitLobbyDirectory() {
+  const lobbies = Array.from(lobbySettings.keys())
+    .map(publicLobby)
+    .filter((lobby) => lobby.id !== DEFAULT_LOBBY && !lobby.started);
+  io.emit('lobbyList', lobbies);
+}
+
 function emitLobbyState(lobby = DEFAULT_LOBBY) {
   const room = lobbyRoom(lobby);
   const lobbyPlayers = playersInLobby(lobby);
@@ -157,6 +199,7 @@ io.on('connection', (socket) => {
   };
 
   players.set(socket.id, player);
+  lobbyConfig(DEFAULT_LOBBY);
   socket.join(lobbyRoom(player.lobby));
 
   socket.emit('init', {
@@ -165,10 +208,12 @@ io.on('connection', (socket) => {
     round: publicRound(player.lobby),
     zombies: Array.from(zombies.values()).map(publicZombie),
     lobby: player.lobby,
+    lobbyState: publicLobby(player.lobby),
   });
 
   socket.to(lobbyRoom(player.lobby)).emit('playerJoined', publicPlayer(player));
   emitLobbyState(player.lobby);
+  emitLobbyDirectory();
 
   socket.on('playerUpdate', (state = {}) => {
     const current = players.get(socket.id);
@@ -188,30 +233,86 @@ io.on('connection', (socket) => {
     current.name = sanitizeName(name, current.name);
     io.to(lobbyRoom(current.lobby)).emit('playerRenamed', { id: socket.id, name: current.name });
     io.to(lobbyRoom(current.lobby)).emit('roundState', publicRound(current.lobby));
+    emitLobbyDirectory();
+  });
+
+  socket.on('listLobbies', (callback) => {
+    const lobbies = Array.from(lobbySettings.keys())
+      .map(publicLobby)
+      .filter((lobby) => lobby.id !== DEFAULT_LOBBY && !lobby.started);
+    if (typeof callback === 'function') callback(lobbies);
+    socket.emit('lobbyList', lobbies);
+  });
+
+  socket.on('createLobby', (settings = {}, callback) => {
+    const current = players.get(socket.id);
+    if (!current) return;
+    const lobbyId = sanitizeLobby(settings.name || `${current.name}'s Lobby`);
+    const config = lobbyConfig(lobbyId);
+    config.name = lobbyId;
+    config.hostId = socket.id;
+    config.map = settings.map === 'arcade' ? 'arcade' : 'hydro';
+    config.mode = settings.mode === 'coop' ? 'coop' : 'battle';
+    config.restricted = Array.isArray(settings.restricted)
+      ? settings.restricted.filter((weapon) => ['shotgun', 'sniper', 'smg', 'dmr', 'launcher'].includes(weapon))
+      : [];
+    config.started = false;
+    moveToLobby(socket, current, lobbyId);
+    emitLobbyState(lobbyId);
+    io.to(lobbyRoom(lobbyId)).emit('lobbyState', publicLobby(lobbyId));
+    emitLobbyDirectory();
+    if (typeof callback === 'function') callback(publicLobby(lobbyId));
   });
 
   socket.on('joinLobby', (lobbyName, callback) => {
     const current = players.get(socket.id);
     if (!current) return;
-    const previousLobby = current.lobby || DEFAULT_LOBBY;
     const nextLobby = sanitizeLobby(lobbyName);
-    if (previousLobby !== nextLobby) {
-      socket.leave(lobbyRoom(previousLobby));
-      socket.to(lobbyRoom(previousLobby)).emit('playerLeft', socket.id);
-      current.lobby = nextLobby;
-      socket.join(lobbyRoom(nextLobby));
-      emitLobbyState(previousLobby);
-    }
+    const config = lobbyConfig(nextLobby);
+    if (config.started && config.hostId !== socket.id) return;
+    moveToLobby(socket, current, nextLobby);
     socket.emit('init', {
       id: socket.id,
       players: playersInLobby(nextLobby).map(publicPlayer),
       round: publicRound(nextLobby),
       zombies: Array.from(zombies.values()).map(publicZombie),
       lobby: nextLobby,
+      lobbyState: publicLobby(nextLobby),
     });
     socket.to(lobbyRoom(nextLobby)).emit('playerJoined', publicPlayer(current));
     emitLobbyState(nextLobby);
-    if (typeof callback === 'function') callback({ lobby: nextLobby, players: playersInLobby(nextLobby).length });
+    io.to(lobbyRoom(nextLobby)).emit('lobbyState', publicLobby(nextLobby));
+    emitLobbyDirectory();
+    if (typeof callback === 'function') callback(publicLobby(nextLobby));
+  });
+
+  socket.on('startLobby', (callback) => {
+    const current = players.get(socket.id);
+    if (!current) return;
+    const config = lobbyConfig(current.lobby);
+    if (config.hostId !== socket.id) return;
+    config.started = true;
+    startRound(config.mode, config.map);
+    io.to(lobbyRoom(config.id)).emit('lobbyStarted', publicLobby(config.id));
+    io.to(lobbyRoom(config.id)).emit('mapState', config.map);
+    emitLobbyDirectory();
+    if (typeof callback === 'function') callback(publicLobby(config.id));
+  });
+
+  socket.on('kickPlayer', (targetId) => {
+    const current = players.get(socket.id);
+    const target = players.get(targetId);
+    if (!current || !target || target.id === current.id) return;
+    const config = lobbyConfig(current.lobby);
+    if (config.hostId !== socket.id || target.lobby !== current.lobby) return;
+    const targetSocket = io.sockets.sockets.get(targetId);
+    if (targetSocket) {
+      targetSocket.emit('kicked', { lobby: current.lobby, reason: 'Host removed you from the lobby.' });
+      moveToLobby(targetSocket, target, DEFAULT_LOBBY);
+    }
+    emitLobbyState(current.lobby);
+    io.to(lobbyRoom(current.lobby)).emit('lobbyState', publicLobby(current.lobby));
+    emitLobbyDirectory();
   });
 
   socket.on('pingCheck', (_sent, callback) => {
@@ -302,6 +403,7 @@ io.on('connection', (socket) => {
         weapon,
         headshot,
       });
+      socket.emit('creditsEarned', { amount: 25, reason: 'player eliminated' });
     }
 
     io.to(lobbyRoom(attacker.lobby)).emit('healthUpdate', {
@@ -330,6 +432,7 @@ io.on('connection', (socket) => {
         victimName: 'Zombie',
         weapon: 'zombie',
       });
+      socket.emit('creditsEarned', { amount: 10, reason: 'zombie eliminated' });
     }
   });
 
@@ -339,8 +442,15 @@ io.on('connection', (socket) => {
     players.delete(socket.id);
     votes.delete(socket.id);
     mapVotes.delete(socket.id);
+    const config = lobbyConfig(lobby);
+    if (config.hostId === socket.id) {
+      const replacement = playersInLobby(lobby).find((candidate) => candidate.id !== socket.id);
+      config.hostId = replacement ? replacement.id : null;
+    }
     io.to(lobbyRoom(lobby)).emit('playerLeft', socket.id);
     emitLobbyState(lobby);
+    io.to(lobbyRoom(lobby)).emit('lobbyState', publicLobby(lobby));
+    emitLobbyDirectory();
   });
 });
 
@@ -383,6 +493,21 @@ function sanitizeName(input, fallback) {
   return clean || fallback;
 }
 
+function moveToLobby(socket, player, nextLobby) {
+  const previousLobby = player.lobby || DEFAULT_LOBBY;
+  if (previousLobby === nextLobby) return;
+  socket.leave(lobbyRoom(previousLobby));
+  socket.to(lobbyRoom(previousLobby)).emit('playerLeft', player.id);
+  player.lobby = nextLobby;
+  socket.join(lobbyRoom(nextLobby));
+  const previousConfig = lobbyConfig(previousLobby);
+  if (previousConfig.hostId === player.id) {
+    const replacement = playersInLobby(previousLobby).find((candidate) => candidate.id !== player.id);
+    previousConfig.hostId = replacement ? replacement.id : null;
+  }
+  emitLobbyState(previousLobby);
+}
+
 function startVoting() {
   votes.clear();
   zombies.clear();
@@ -396,10 +521,10 @@ function startVoting() {
   for (const lobby of activeLobbies()) io.to(lobbyRoom(lobby)).emit('zombies', []);
 }
 
-function startRound(mode) {
+function startRound(mode, forcedMap = null) {
   zombies.clear();
   votes.clear();
-  currentMap = getWinningMap();
+  currentMap = forcedMap || getWinningMap();
   round = {
     phase: 'playing',
     mode,

@@ -358,6 +358,7 @@
       background: rgba(8, 12, 14, 0.68);
       backdrop-filter: blur(8px);
       pointer-events: auto;
+      display: none;
     }
 
     #shopPanel strong {
@@ -484,14 +485,14 @@
     }
 
     #mapVoteGraph {
-      display: grid;
+      display: none;
       gap: 7px;
       font-size: 12px;
       color: rgba(255, 255, 255, 0.78);
     }
 
     #mapVoteButtons {
-      display: flex;
+      display: none;
       gap: 8px;
     }
 
@@ -724,6 +725,46 @@
     .gunPreview.smg .mag { height: 28px; }
     .gunPreview.dmr .body { width: 92px; }
     .gunPreview.dmr .barrel { width: 68px; }
+    .gunPreview.launcher .body { width: 90px; height: 20px; top: 15px; }
+    .gunPreview.launcher .barrel { width: 72px; height: 14px; top: 18px; border: 2px solid #15191d; background: #556068; }
+    .gunPreview.launcher .mag { width: 24px; height: 18px; top: 31px; }
+    .gunPreview.launcher .optic { display: none; }
+
+    #lobbyMenu {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    #lobbyList,
+    #lobbyMembers {
+      display: grid;
+      gap: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 13px;
+    }
+
+    .lobbyEntry,
+    .memberEntry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .lobbyEntry button,
+    .memberEntry button {
+      width: auto !important;
+      min-width: 70px;
+      margin: 0 !important;
+      height: 30px !important;
+      padding: 0 10px;
+    }
 
     .slot {
       min-width: 112px;
@@ -1175,6 +1216,7 @@
       <div class="slot" data-weapon="sniper">3 Sniper</div>
       <div class="slot" data-weapon="smg">4 SMG</div>
       <div class="slot" data-weapon="dmr">5 DMR</div>
+      <div class="slot" data-weapon="launcher">6 Launcher</div>
     </div>
     <div id="shopPanel">
       <strong>Shop</strong>
@@ -1182,6 +1224,7 @@
       <button data-buy="dmr">DMR</button>
       <button data-buy="shotgun">Shotgun</button>
       <button data-buy="sniper">Sniper</button>
+      <button data-buy="launcher">Launcher</button>
     </div>
     <div id="roundPanel">
       <div id="roundTitle">Round Vote</div>
@@ -1218,6 +1261,17 @@
           <button class="mapButton active" data-map="hydro" type="button">Trigger Forest<small>Dense block woods, rocks, mine cover.</small></button>
           <button class="mapButton" data-map="arcade" type="button">Trigger Ship<small>Blocky cargo ship over deep water.</small></button>
         </div>
+        <div id="lobbyMenu">
+          <div class="settingRow">
+            <label><input id="restrictSniper" type="checkbox"> Restrict sniper</label>
+            <label><input id="restrictLauncher" type="checkbox"> Restrict launcher</label>
+          </div>
+          <button id="createLobbyButton" type="button">Create Lobby</button>
+          <button id="refreshLobbiesButton" type="button">Find Lobbies</button>
+          <div id="lobbyList"></div>
+          <div id="lobbyMembers"></div>
+          <button id="startLobbyButton" type="button">Start Lobby</button>
+        </div>
         <div id="profileSummary">
           <span>Profile: <strong id="profileName">Guest</strong></span>
           <span>Credits: <strong id="profileCredits">0</strong></span>
@@ -1243,8 +1297,12 @@
             <div class="gunPreview sniper"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
             <strong>Sniper</strong><small>Best scope and highest damage.</small><span class="shopPrice">500 credits</span>
           </button>
+          <button class="shopCard" data-buy="launcher" type="button">
+            <div class="gunPreview launcher"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Grenade Launcher</strong><small>Arc explosive shells into cover.</small><span class="shopPrice">800 credits</span>
+          </button>
         </div>
-        <button id="joinButton">Join Match</button>
+        <button id="joinButton">Save Profile</button>
       </div>
     </div>
     <div id="notice">
@@ -1265,6 +1323,7 @@
       <h1>TRIGGER BLOXXY</h1>
       <p>Blocky arenas, detailed guns, private lobbies. Choose a lobby, squad up, then vote your way into the forest or the ship.</p>
       <div id="titleMenu">
+        <input id="introUsernameInput" maxlength="18" placeholder="Username">
         <input id="lobbyInput" maxlength="24" value="public" placeholder="Lobby name">
         <button id="introStart" type="button">Enter Lobby</button>
         <div id="lobbyPresets">
@@ -1444,7 +1503,38 @@
         reserve: 48,
         reloadTime: 1500,
       },
+      launcher: {
+        label: 'Grenade Launcher',
+        damage: 85,
+        fireDelay: 1250,
+        automatic: false,
+        spread: 0.006,
+        pellets: 1,
+        recoil: 0.28,
+        range: 150,
+        adsFov: 50,
+        hipFov: 76,
+        adsOffset: new THREE.Vector3(0.08, -0.3, -0.82),
+        hipOffset: new THREE.Vector3(0.4, -0.4, -0.64),
+        magazine: 1,
+        reserve: 8,
+        reloadTime: 1700,
+        explosive: true,
+      },
     };
+
+    const weaponCosts = { assault: 0, smg: 150, shotgun: 250, dmr: 350, sniper: 500, launcher: 800 };
+    const weaponDescriptions = {
+      assault: 'Starter auto rifle. Always unlocked.',
+      smg: 'Fast close-range spray.',
+      shotgun: 'Wide burst for tight fights.',
+      dmr: 'Precise semi-auto hits.',
+      sniper: 'Best scope and highest damage.',
+      launcher: 'Arc explosive shells into cover.',
+    };
+    const profile = { username: '', credits: 0, owned: ['assault'] };
+    let currentLobbyState = null;
+    let gameStarted = false;
 
     const weaponState = {
       lastShot: 0,
@@ -1456,6 +1546,7 @@
         sniper: { current: weapons.sniper.magazine, reserve: weapons.sniper.reserve },
         smg: { current: weapons.smg.magazine, reserve: weapons.smg.reserve },
         dmr: { current: weapons.dmr.magazine, reserve: weapons.dmr.reserve },
+        launcher: { current: weapons.launcher.magazine, reserve: weapons.launcher.reserve },
       },
       recoil: 0,
       muzzle: 0,
@@ -1491,11 +1582,19 @@
       profileName: document.getElementById('profileName'),
       profileCredits: document.getElementById('profileCredits'),
       menuShopButtons: Array.from(document.querySelectorAll('#menuShop .shopCard')),
+      lobbyList: document.getElementById('lobbyList'),
+      lobbyMembers: document.getElementById('lobbyMembers'),
+      createLobbyButton: document.getElementById('createLobbyButton'),
+      refreshLobbiesButton: document.getElementById('refreshLobbiesButton'),
+      startLobbyButton: document.getElementById('startLobbyButton'),
+      restrictSniper: document.getElementById('restrictSniper'),
+      restrictLauncher: document.getElementById('restrictLauncher'),
       damageVignette: document.getElementById('damageVignette'),
       damageNumbers: document.getElementById('damageNumbers'),
       deathScreen: document.getElementById('deathScreen'),
       introOverlay: document.getElementById('introOverlay'),
       introStart: document.getElementById('introStart'),
+      introUsernameInput: document.getElementById('introUsernameInput'),
       lobbyInput: document.getElementById('lobbyInput'),
       lobbyPresets: Array.from(document.querySelectorAll('#lobbyPresets button')),
       scope: document.getElementById('scope'),
@@ -1634,6 +1733,7 @@
       weaponState.ammo.sniper = { current: weapons.sniper.magazine, reserve: weapons.sniper.reserve };
       weaponState.ammo.smg = { current: weapons.smg.magazine, reserve: weapons.smg.reserve };
       weaponState.ammo.dmr = { current: weapons.dmr.magazine, reserve: weapons.dmr.reserve };
+      weaponState.ammo.launcher = { current: weapons.launcher.magazine, reserve: weapons.launcher.reserve };
       weaponState.reloadWeapon = null;
       weaponState.reloadingUntil = 0;
       updateAmmoDisplay();
@@ -1656,6 +1756,126 @@
         performanceStats.ping = Math.max(0, performance.now() - sent);
         refreshPerformanceDisplay();
       });
+    }
+
+    function profileKey(name = profile.username) {
+      return `trigger-bloxxy-profile:${String(name || 'guest').toLowerCase()}`;
+    }
+
+    function loadProfile(name) {
+      profile.username = String(name || '').trim().slice(0, 18) || 'Player';
+      profile.credits = 0;
+      profile.owned = ['assault'];
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(profileKey()) || '{}');
+        if (Number.isFinite(stored.credits)) profile.credits = Math.max(0, stored.credits);
+        if (Array.isArray(stored.owned)) profile.owned = Array.from(new Set(['assault', ...stored.owned.filter((weapon) => weapons[weapon])]));
+      } catch (error) {
+        profile.owned = ['assault'];
+      }
+      updateProfileUi();
+      updateWeaponLocks();
+    }
+
+    function saveProfile() {
+      if (!profile.username) return;
+      window.localStorage.setItem(profileKey(), JSON.stringify({ credits: profile.credits, owned: profile.owned }));
+      updateProfileUi();
+    }
+
+    function addCredits(amount, reason = '') {
+      if (!amount || amount <= 0) return;
+      profile.credits += amount;
+      saveProfile();
+      ui.status.textContent = reason ? `+${amount} credits: ${reason}` : `+${amount} credits`;
+    }
+
+    function ownsWeapon(name) {
+      return profile.owned.includes(name);
+    }
+
+    function isWeaponAllowed(name) {
+      return ownsWeapon(name) && !(currentLobbyState && Array.isArray(currentLobbyState.restricted) && currentLobbyState.restricted.includes(name));
+    }
+
+    function buyOrEquipWeapon(name) {
+      if (!weapons[name]) return;
+      const cost = weaponCosts[name] || 0;
+      if (!ownsWeapon(name)) {
+        if (profile.credits < cost) {
+          ui.status.textContent = `${weapons[name].label} needs ${cost} credits`;
+          return;
+        }
+        profile.credits -= cost;
+        profile.owned.push(name);
+        saveProfile();
+      }
+      setWeapon(name);
+      updateProfileUi();
+    }
+
+    function updateProfileUi() {
+      if (ui.profileName) ui.profileName.textContent = profile.username || 'Guest';
+      if (ui.profileCredits) ui.profileCredits.textContent = profile.credits;
+      ui.menuShopButtons.forEach((button) => {
+        const name = button.dataset.buy;
+        const owned = ownsWeapon(name);
+        const allowed = isWeaponAllowed(name);
+        button.classList.toggle('owned', owned);
+        button.classList.toggle('equipped', localPlayer.weapon === name);
+        button.disabled = owned && !allowed;
+        const price = button.querySelector('.shopPrice');
+        if (price) price.textContent = owned ? (allowed ? 'Owned' : 'Restricted') : `${weaponCosts[name] || 0} credits`;
+      });
+    }
+
+    function updateWeaponLocks() {
+      ui.slots.forEach((slot) => {
+        slot.classList.toggle('locked', !isWeaponAllowed(slot.dataset.weapon));
+      });
+      updateProfileUi();
+    }
+
+    function renderLobbyList(lobbies = []) {
+      ui.lobbyList.innerHTML = '';
+      if (!lobbies.length) {
+        ui.lobbyList.textContent = 'No open lobbies yet.';
+        return;
+      }
+      for (const lobby of lobbies) {
+        const row = document.createElement('div');
+        row.className = 'lobbyEntry';
+        row.innerHTML = `<span>${lobby.name} · ${lobby.map === 'arcade' ? 'Trigger Ship' : 'Trigger Forest'} · ${lobby.playerCount} players</span>`;
+        const join = document.createElement('button');
+        join.type = 'button';
+        join.textContent = 'Join';
+        join.addEventListener('click', () => socket.emit('joinLobby', lobby.id));
+        row.appendChild(join);
+        ui.lobbyList.appendChild(row);
+      }
+    }
+
+    function renderLobbyMembers(lobby) {
+      currentLobbyState = lobby;
+      ui.lobbyMembers.innerHTML = '';
+      if (!lobby || !Array.isArray(lobby.players)) return;
+      const isHost = lobby.hostId === localPlayer.id;
+      for (const member of lobby.players) {
+        const row = document.createElement('div');
+        row.className = 'memberEntry';
+        row.innerHTML = `<span>${member.name}${member.id === lobby.hostId ? ' · host' : ''}</span>`;
+        if (isHost && member.id !== localPlayer.id) {
+          const kick = document.createElement('button');
+          kick.type = 'button';
+          kick.textContent = 'Kick';
+          kick.addEventListener('click', () => socket.emit('kickPlayer', member.id));
+          row.appendChild(kick);
+        }
+        ui.lobbyMembers.appendChild(row);
+      }
+      ui.startLobbyButton.style.display = isHost ? 'block' : 'none';
+      if (lobby.map) setMap(lobby.map);
+      updateWeaponLocks();
     }
 
     function updatePerformanceStats(delta, renderMs = 0) {
@@ -1742,8 +1962,13 @@
     camera.add(weaponModel.group);
     updateWeaponVisual(localPlayer.weapon);
 
-    socket.on('init', ({ id, players, round, zombies: initialZombies, lobby }) => {
+    socket.on('init', ({ id, players, round, zombies: initialZombies, lobby, lobbyState }) => {
       localPlayer.id = id;
+      const self = players.find((player) => player.id === id);
+      if (self && self.color) {
+        localPlayer.color = self.color;
+        tintLocalWeapon();
+      }
       if (lobby) selectedLobby = lobby;
       resetAmmo();
       for (const existingId of Array.from(playerMeshes.keys())) removeRemotePlayer(existingId);
@@ -1753,6 +1978,7 @@
         if (player.id !== id) addOrUpdateRemotePlayer(player);
       }
       if (round && round.map) setMap(round.map);
+      if (lobbyState) renderLobbyMembers(lobbyState);
       updateRoundUi(round);
       updateZombies(initialZombies || []);
       ui.playersOnline.textContent = players.length;
@@ -1781,6 +2007,29 @@
     socket.on('grenade', spawnRemoteGrenade);
     socket.on('roundState', updateRoundUi);
     socket.on('mapState', setMap);
+    socket.on('lobbyState', (lobby) => {
+      currentLobbyState = lobby;
+      renderLobbyMembers(lobby);
+      if (lobby && lobby.map) setMap(lobby.map);
+      updateWeaponLocks();
+    });
+    socket.on('lobbyList', renderLobbyList);
+    socket.on('creditsEarned', ({ amount, reason }) => addCredits(Number(amount) || 0, reason || 'combat'));
+    socket.on('lobbyStarted', (lobby) => {
+      currentLobbyState = lobby;
+      gameStarted = true;
+      ui.loginOverlay.style.display = 'none';
+      ui.notice.style.display = 'block';
+      if (lobby && lobby.map) setMap(lobby.map);
+      updateWeaponLocks();
+    });
+    socket.on('kicked', ({ reason }) => {
+      gameStarted = false;
+      ui.loginOverlay.style.display = 'grid';
+      ui.notice.style.display = 'none';
+      ui.status.textContent = reason || 'You were kicked from the lobby';
+      controls.unlock();
+    });
     socket.on('zombies', updateZombies);
     socket.on('zombieKilled', ({ id, by, score }) => {
       removeZombie(id);
@@ -1842,6 +2091,7 @@
       if (event.code === 'Digit3') setWeapon('sniper');
       if (event.code === 'Digit4') setWeapon('smg');
       if (event.code === 'Digit5') setWeapon('dmr');
+      if (event.code === 'Digit6') setWeapon('launcher');
       if (event.code === settings.keybinds.shoot) localPlayer.shooting = true;
       if (event.code === settings.keybinds.aim) weaponState.zooming = true;
       if (event.code === settings.keybinds.reload) reloadWeapon();
@@ -1857,12 +2107,14 @@
     });
     ui.mapButtons.forEach((button) => {
       button.addEventListener('click', () => {
+        if (gameStarted || ui.loginOverlay.style.display === 'none') return;
         setMap(button.dataset.map);
         socket.emit('voteMap', button.dataset.map);
       });
     });
     ui.mapVoteButtons.forEach((button) => {
       button.addEventListener('click', () => {
+        if (gameStarted) return;
         setMap(button.dataset.map);
         socket.emit('voteMap', button.dataset.map);
         ui.mapVoteButtons.forEach((b) => b.classList.toggle('active', b === button));
@@ -1870,10 +2122,26 @@
     });
     document.querySelectorAll('#shopPanel button').forEach((button) => {
       button.addEventListener('click', () => {
-        setWeapon(button.dataset.buy);
+        buyOrEquipWeapon(button.dataset.buy);
         ui.status.textContent = `Equipped ${weapons[localPlayer.weapon].label}`;
       });
     });
+    ui.menuShopButtons.forEach((button) => {
+      button.addEventListener('click', () => buyOrEquipWeapon(button.dataset.buy));
+    });
+    ui.createLobbyButton.addEventListener('click', () => {
+      const restricted = [];
+      if (ui.restrictSniper.checked) restricted.push('sniper');
+      if (ui.restrictLauncher.checked) restricted.push('launcher');
+      socket.emit('createLobby', {
+        name: `${profile.username || 'Player'} Lobby`,
+        map: activeMap,
+        mode: localPlayer.vote || 'battle',
+        restricted,
+      }, renderLobbyMembers);
+    });
+    ui.refreshLobbiesButton.addEventListener('click', () => socket.emit('listLobbies', renderLobbyList));
+    ui.startLobbyButton.addEventListener('click', () => socket.emit('startLobby'));
     ui.joinButton.addEventListener('click', joinWithName);
     ui.usernameInput.addEventListener('keydown', (event) => {
       if (event.code === 'Enter') joinWithName();
@@ -1912,6 +2180,14 @@
     window.setInterval(requestPing, 3000);
 
     function enterLobby() {
+      const clean = ui.introUsernameInput.value.trim().replace(/[^\w .-]/g, '').slice(0, 18);
+      if (!clean) {
+        ui.introUsernameInput.placeholder = 'Username required';
+        return;
+      }
+      loadProfile(clean);
+      ui.usernameInput.value = clean;
+      socket.emit('setName', clean);
       selectedLobby = sanitizeLobbyName(ui.lobbyInput.value);
       ui.lobbyInput.value = selectedLobby;
       socket.emit('joinLobby', selectedLobby, () => {
@@ -1926,11 +2202,12 @@
     function joinWithName() {
       const clean = ui.usernameInput.value.trim().replace(/[^\w .-]/g, '').slice(0, 18) || `Player ${Math.floor(rand() * 9000 + 1000)}`;
       ui.usernameInput.value = clean;
+      loadProfile(clean);
       socket.emit('setName', clean);
       if (localPlayer.id) playerNames.set(localPlayer.id, clean);
-      ui.loginOverlay.style.display = 'none';
-      ui.notice.style.display = 'block';
+      ui.notice.style.display = 'none';
       if (currentRound) updateRoundUi(currentRound);
+      socket.emit('listLobbies', renderLobbyList);
     }
 
     function setupLighting() {
@@ -2034,7 +2311,9 @@
     }
 
     function setMap(mapName) {
-      activeMap = mapName === 'arcade' ? 'arcade' : 'hydro';
+      const nextMap = mapName === 'arcade' ? 'arcade' : 'hydro';
+      if (activeMap === nextMap && arenaRoot.children.length) return;
+      activeMap = nextMap;
       ui.mapButtons.forEach((button) => button.classList.toggle('active', button.dataset.map === activeMap));
       clearArena();
       createArena();
@@ -2069,14 +2348,14 @@
       forestFloor.receiveShadow = true;
       addArena(forestFloor);
 
-      for (let i = 0; i < 245; i++) {
+      for (let i = 0; i < 320; i++) {
         const x = (rand() - 0.5) * 386;
         const z = (rand() - 0.5) * 386;
         if (Math.hypot(x, z) < 16) continue;
         addBlockTree(x, z, 4 + rand() * 5, leafMats[Math.floor(rand() * leafMats.length)]);
       }
 
-      for (let i = 0; i < 120; i++) {
+      for (let i = 0; i < 155; i++) {
         addBlockRock((rand() - 0.5) * 378, (rand() - 0.5) * 378, 1 + rand() * 2.8);
       }
 
@@ -2094,6 +2373,9 @@
       mine.add(wall, hole, beamTop, beamL, beamR);
       addArena(mine);
       addCollider(wall, 0.04);
+
+      for (const [x, z, rot] of [[-126, -44, 0.2], [118, -82, -0.4], [-68, 118, 0.8], [74, 132, -0.7]]) addForestCabin(x, z, rot);
+      for (const [x, z] of [[-148, 94], [150, 72], [-128, -128], [132, -144], [6, 150]]) addWatchtower(x, z);
 
       for (const [x, z] of [[-42, -36], [58, -22], [-76, 62], [90, 72], [18, 118], [-118, -86]]) addHealthPickup(x, z);
 
@@ -2135,6 +2417,40 @@
         addArena(rock);
         rock.children.forEach((child) => addCollider(child, 0.03));
       }
+
+      function addForestCabin(x, z, rot) {
+        const cabin = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(13, 6, 11), dirtMat);
+        body.position.y = 3;
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(15, 2.2, 13), trunkMat);
+        roof.position.y = 7.1;
+        const door = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3.5, 0.3), new THREE.MeshStandardMaterial({ color: 0x19130d, roughness: 0.9 }));
+        door.position.set(0, 1.75, -5.65);
+        cabin.add(body, roof, door);
+        cabin.position.set(x, 0, z);
+        cabin.rotation.y = rot;
+        addArena(cabin);
+        addCollider(body, 0.04);
+        addCollider(roof, 0.04);
+      }
+
+      function addWatchtower(x, z) {
+        const tower = new THREE.Group();
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.8, 12, 0.8), trunkMat);
+          post.position.set(sx * 3.2, 6, sz * 3.2);
+          tower.add(post);
+        }
+        const platform = new THREE.Mesh(new THREE.BoxGeometry(9, 0.8, 9), trunkMat);
+        platform.position.y = 11.8;
+        const hut = new THREE.Mesh(new THREE.BoxGeometry(6, 4.5, 6), dirtMat);
+        hut.position.y = 14.4;
+        tower.add(platform, hut);
+        tower.position.set(x, 0, z);
+        addArena(tower);
+        for (const child of tower.children) addCollider(child, 0.03, { standable: child === platform });
+        terrainSurfaces.push({ type: 'bridge', x1: x - 4.5, x2: x + 4.5, z1: z - 4.5, z2: z + 4.5, height: 12.25 });
+      }
     }
 
     function addTriggerShip() {
@@ -2143,8 +2459,8 @@
       const waterMat = new THREE.MeshStandardMaterial({ color: 0x0a4865, emissive: 0x06283c, emissiveIntensity: 0.35, roughness: 0.04, metalness: 0.02, transparent: true, opacity: 0.82 });
       createOpenWater(560, 560, waterMat);
 
-      const hullMat = texturedMaterial(0x39464c, 0.74, 0.22, 'metal');
-      const deckMat = texturedMaterial(0x8a6c45, 0.88, 0.05, 'wall');
+      const hullMat = texturedMaterial(0x4a2f1f, 0.84, 0.04, 'wall');
+      const deckMat = texturedMaterial(0x8a6338, 0.9, 0.03, 'wall');
       const ship = new THREE.Group();
       const deck = new THREE.Mesh(new THREE.BoxGeometry(232, 1.2, 72), deckMat);
       deck.position.y = 2.2;
@@ -2160,38 +2476,44 @@
       addCollider(deck, 0.04, { standable: false });
       terrainSurfaces.push({ type: 'bridge', x1: -118, x2: 120, z1: -38, z2: 38, height: 2.85 });
 
-      const cabinMat = texturedMaterial(0xe8e2d4, 0.74, 0.08, 'wall');
-      for (const [x, y, z, w, h, d] of [[-56, 6.4, 0, 28, 7, 22], [-76, 11.2, 0, 18, 4.5, 16], [60, 5.8, -18, 24, 5, 12]]) {
-        const cabin = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cabinMat);
-        cabin.position.set(x, y, z);
-        cabin.castShadow = true;
-        cabin.receiveShadow = true;
-        addArena(cabin);
-        addCollider(cabin, 0.04);
+      const railMat = texturedMaterial(0x2a1a12, 0.84, 0.04, 'wall');
+      const sailMat = new THREE.MeshStandardMaterial({ color: 0xd8c9a2, roughness: 0.92, metalness: 0.01, side: THREE.DoubleSide });
+      const shieldMats = [0x9e3434, 0x2f609d, 0xd0a23f, 0x3a7f57].map((c) => texturedMaterial(c, 0.72, 0.08, 'wall'));
+      for (const x of [-74, -18, 38]) {
+        const mast = new THREE.Mesh(new THREE.BoxGeometry(2.2, 34, 2.2), railMat);
+        mast.position.set(x, 20, 0);
+        addArena(mast);
+        addCollider(mast, 0.04);
+        const yard = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 52), railMat);
+        yard.position.set(x, 29, 0);
+        addArena(yard);
+        const sail = new THREE.Mesh(new THREE.PlaneGeometry(36, 22), sailMat.clone());
+        sail.position.set(x + 1, 20, 0);
+        sail.rotation.y = Math.PI / 2;
+        addArena(sail);
       }
-
-      const containerMats = [0x9e3434, 0x2f609d, 0xd0a23f, 0x3a7f57, 0x7b4b8f].map((c) => texturedMaterial(c, 0.7, 0.2, 'metal'));
-      for (let i = 0; i < 64; i++) {
-        const cont = new THREE.Mesh(new THREE.BoxGeometry(10, 4.2, 5), containerMats[i % containerMats.length]);
-        cont.position.set(-92 + (i % 16) * 12.5, 4.9 + Math.floor(i / 32) * 4.4, -24 + Math.floor((i % 32) / 16) * 48);
-        cont.rotation.y = (i % 5 === 0) ? Math.PI / 2 : 0;
-        cont.castShadow = true;
-        cont.receiveShadow = true;
-        addArena(cont);
-        addCollider(cont, 0.04);
+      for (let i = 0; i < 24; i++) {
+        const x = -106 + i * 9.2;
+        for (const side of [-1, 1]) {
+          const oar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.35, 34), railMat);
+          oar.position.set(x, 2.9, side * 47);
+          oar.rotation.x = side * 0.18;
+          addArena(oar);
+          const shield = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 0.35), shieldMats[i % shieldMats.length]);
+          shield.position.set(x, 4.7, side * 37.2);
+          addArena(shield);
+        }
       }
-
-      const railMat = texturedMaterial(0x22282b, 0.55, 0.42, 'metal');
+      for (const [x, z, w, d] of [[-92, 0, 20, 18], [96, 0, 18, 16], [0, -22, 16, 9], [28, 23, 18, 9]]) {
+        const shelter = new THREE.Mesh(new THREE.BoxGeometry(w, 3.4, d), deckMat);
+        shelter.position.set(x, 5.1, z);
+        addArena(shelter);
+        addCollider(shelter, 0.04);
+      }
       for (const z of [-33, 33]) {
         const rail = new THREE.Mesh(new THREE.BoxGeometry(232, 0.35, 0.45), railMat);
         rail.position.set(0, 4.2, z);
         addArena(rail);
-      }
-      for (const x of [-92, -52, -12, 28, 68, 98]) {
-        const mast = new THREE.Mesh(new THREE.BoxGeometry(1.6, 18, 1.6), railMat);
-        mast.position.set(x, 11.5, x % 2 ? -27 : 27);
-        addArena(mast);
-        addCollider(mast, 0.03);
       }
       for (const [x, z] of [[-86, 18], [-28, -18], [38, 22], [88, -18]]) addHealthPickup(x, z);
 
@@ -3051,9 +3373,9 @@
       const kneeR = box(0.24, 0.16, 0.24, 0.25, 0.62, -0.13, armorMat);
 
       const gun = new THREE.Group();
-      const gunBody = box(0.18, 0.15, 0.7, 0.42, 1.44, -0.42, darkMat);
+      const gunBody = box(0.18, 0.15, 0.7, 0.42, 1.44, -0.42, armorMat);
       const gunBarrel = cylinder(0.025, 0.025, 0.46, 0.42, 1.45, -0.96, darkMat);
-      const gunStock = box(0.16, 0.12, 0.24, 0.42, 1.43, -0.02, darkMat);
+      const gunStock = box(0.16, 0.12, 0.24, 0.42, 1.43, -0.02, armorMat);
       gun.add(gunBody, gunBarrel, gunStock);
       const nameLabel = createNameLabel(player.name || `Player ${player.id.slice(0, 4)}`);
       nameLabel.position.set(0, 2.78, 0);
@@ -3209,17 +3531,26 @@
 
     function setWeapon(name) {
       if (!weapons[name]) name = 'assault';
+      if (!isWeaponAllowed(name)) {
+        ui.status.textContent = ownsWeapon(name) ? `${weapons[name].label} is restricted here` : `${weapons[name].label} is not owned`;
+        updateWeaponLocks();
+        return;
+      }
       localPlayer.weapon = name;
       ui.slots.forEach((slot) => slot.classList.toggle('active', slot.dataset.weapon === name));
       updateWeaponVisual(name);
       ui.status.textContent = 'Live';
       updateAmmoDisplay();
+      updateWeaponLocks();
     }
 
     function updateWeaponVisual(name) {
       const p = weaponModel.parts;
       const sniper = name === 'sniper';
       const shotgun = name === 'shotgun';
+      const smg = name === 'smg';
+      const dmr = name === 'dmr';
+      const launcher = name === 'launcher';
       for (const part of [p.receiver, p.upper, p.handguard, p.stock, p.grip, p.magazine, p.rail, ...p.railSlots, p.triggerGuard, p.ejectionPort, p.chargingHandle, p.frontSight, p.rearSight, p.barrel, p.muzzleBrake, p.optic, p.opticGlass, p.sideModule, p.slingMount, p.foreGrip]) {
         part.visible = true;
       }
@@ -3235,16 +3566,17 @@
       p.rightSleeve.position.set(0.32, -0.23, 0.02);
       p.leftSleeve.rotation.set(0.25, 0.2, -0.38);
       p.rightSleeve.rotation.set(0.2, -0.2, 0.42);
-      p.handguard.scale.set(shotgun ? 1.18 : sniper ? 0.82 : 1, shotgun ? 1.18 : 1, shotgun ? 0.82 : sniper ? 1.3 : 1);
-      p.barrel.scale.set(sniper ? 0.85 : shotgun ? 1.55 : 1, sniper ? 0.85 : shotgun ? 1.55 : 1, sniper ? 1.42 : shotgun ? 0.74 : 1);
-      p.barrel.position.z = sniper ? -1.28 : shotgun ? -0.98 : -1.1;
-      p.muzzleBrake.scale.set(shotgun ? 1.72 : sniper ? 0.95 : 1, shotgun ? 1.72 : sniper ? 0.95 : 1, shotgun ? 0.75 : 1);
-      p.muzzleBrake.position.z = sniper ? -1.78 : shotgun ? -1.36 : -1.55;
-      p.magazine.scale.set(shotgun ? 0.72 : sniper ? 0.62 : 1, shotgun ? 0.5 : sniper ? 0.72 : 1, shotgun ? 1.45 : 1);
-      p.optic.scale.set(sniper ? 1.52 : shotgun ? 0.74 : 1, sniper ? 1.52 : shotgun ? 0.74 : 1, sniper ? 1.75 : shotgun ? 0.72 : 1);
+      p.handguard.scale.set(launcher ? 1.65 : shotgun ? 1.18 : sniper ? 0.82 : smg ? 0.72 : 1, launcher ? 1.55 : shotgun ? 1.18 : 1, launcher ? 1.22 : shotgun ? 0.82 : sniper ? 1.3 : smg ? 0.62 : dmr ? 1.18 : 1);
+      p.barrel.scale.set(launcher ? 2.8 : sniper ? 0.85 : shotgun ? 1.55 : smg ? 0.72 : 1, launcher ? 2.8 : sniper ? 0.85 : shotgun ? 1.55 : smg ? 0.72 : 1, launcher ? 0.78 : sniper ? 1.42 : shotgun ? 0.74 : smg ? 0.62 : dmr ? 1.2 : 1);
+      p.barrel.position.z = launcher ? -0.95 : sniper ? -1.28 : shotgun ? -0.98 : smg ? -0.82 : -1.1;
+      p.muzzleBrake.scale.set(launcher ? 2.6 : shotgun ? 1.72 : sniper ? 0.95 : smg ? 0.82 : 1, launcher ? 2.6 : shotgun ? 1.72 : sniper ? 0.95 : smg ? 0.82 : 1, launcher ? 1.1 : shotgun ? 0.75 : 1);
+      p.muzzleBrake.position.z = launcher ? -1.38 : sniper ? -1.78 : shotgun ? -1.36 : smg ? -1.18 : -1.55;
+      p.magazine.scale.set(launcher ? 1.35 : shotgun ? 0.72 : sniper ? 0.62 : smg ? 0.82 : 1, launcher ? 0.65 : shotgun ? 0.5 : sniper ? 0.72 : smg ? 1.3 : 1, shotgun ? 1.45 : 1);
+      p.optic.scale.set(sniper ? 1.52 : dmr ? 1.18 : shotgun || launcher ? 0.74 : smg ? 0.68 : 1, sniper ? 1.52 : dmr ? 1.18 : shotgun || launcher ? 0.74 : smg ? 0.68 : 1, sniper ? 1.75 : dmr ? 1.25 : shotgun || launcher ? 0.72 : smg ? 0.66 : 1);
       p.optic.position.y = sniper ? 0.38 : 0.34;
-      p.stock.scale.set(sniper ? 1.18 : shotgun ? 0.92 : 1, 1, sniper ? 1.25 : shotgun ? 0.8 : 1);
-      p.sideModule.visible = !sniper;
+      p.stock.scale.set(sniper || dmr ? 1.18 : shotgun ? 0.92 : smg ? 0.72 : 1, 1, sniper || dmr ? 1.25 : shotgun ? 0.8 : smg ? 0.62 : 1);
+      p.sideModule.visible = !sniper && !launcher;
+      tintLocalWeapon();
     }
 
     function reloadWeapon() {
@@ -3531,6 +3863,16 @@
 
       const origin = camera.getWorldPosition(new THREE.Vector3());
       camera.getWorldDirection(mouseDirection);
+      if (weapon.explosive) {
+        const velocity = mouseDirection.clone().multiplyScalar(28);
+        velocity.y += 3.8;
+        const grenade = createGrenade(origin.clone().add(mouseDirection.clone().multiplyScalar(1.2)), velocity, true, localPlayer.id);
+        grenade.life = 1.35;
+        grenades.push(grenade);
+        socket.emit('grenade', { origin: vec(grenade.mesh.position), velocity: vec(velocity) });
+        socket.emit('shoot', { weapon: localPlayer.weapon, origin: vec(origin), direction: vec(mouseDirection), spread: weapon.spread, pelletCount: 1 });
+        return;
+      }
       const hits = [];
       let dealt = 0;
       const aimTightness = THREE.MathUtils.lerp(1, localPlayer.weapon === 'sniper' ? 0.015 : 0.12, weaponState.adsAmount);
@@ -3604,6 +3946,17 @@
         rig.leftArm.rotation.x = -0.55 - fireKick * 0.6;
         rig.gun.rotation.x = fireKick;
         if (rig.nameLabel) rig.nameLabel.quaternion.copy(camera.quaternion);
+      }
+    }
+
+    function tintLocalWeapon() {
+      if (!weaponModel || !weaponModel.parts) return;
+      const accent = new THREE.Color(localPlayer.color || '#59c3ff');
+      for (const part of [weaponModel.parts.receiver, weaponModel.parts.handguard, weaponModel.parts.stock, weaponModel.parts.sideModule]) {
+        if (part && part.material && part.material.color) part.material.color.copy(accent).lerp(new THREE.Color(0x101418), 0.34);
+      }
+      for (const sleeve of [weaponModel.parts.leftSleeve, weaponModel.parts.rightSleeve]) {
+        if (sleeve && sleeve.material && sleeve.material.color) sleeve.material.color.copy(accent).lerp(new THREE.Color(0x080a0c), 0.5);
       }
     }
 

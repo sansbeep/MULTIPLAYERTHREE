@@ -106,3 +106,13 @@ npm start
 - Added animated water surfaces with foam strips.
 - Prevented ground snapping from teleporting players onto catwalks and bridges from below.
 - Made player rigs more blocky while keeping guns detailed.
+
+### v1.3 - Forest, Galley, Shop, and Lobby Flow
+- Replaced the old maps with deterministic Trigger Forest and Trigger Ship layouts so every client sees the same cover.
+- Made Trigger Forest denser with block trees, rocks, cabins, watchtowers, and a mine entrance.
+- Rebuilt Trigger Ship as an ancient blocky galley over deep animated water.
+- Added username-based local profile saves with credits and owned weapons.
+- Players now start with only the assault rifle; locked or lobby-restricted weapons cannot be equipped.
+- Added a menu weapon shop with gun previews, SMG, DMR, and Grenade Launcher unlocks.
+- Added credit rewards for player kills and zombie kills.
+- Added a menu-first lobby flow with create/find lobby, host-selected map, gun restrictions, start, and kick support.
