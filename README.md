@@ -80,3 +80,20 @@ npm start
 - Rebuilt the knife into a coherent held weapon pose.
 - Increased shotgun pellet spread.
 - Added procedural texture noise/grid materials for maps and weapons.
+
+### v1.0 - Warehouse and Mall Expansion
+- Rebuilt Hydro Dream as an indoor warehouse with catwalks, conveyors, shelves, water channels, and industrial cover.
+- Expanded Afterhours Mall into a three-floor ruined atrium with shops, balconies, ramps, railings, and rubble.
+- Added an intro screen before login.
+- Added remappable shoot and aim keybinds.
+- Added floating damage numbers and a death screen effect.
+- Reworked the first-person knife into a cleaner held blade model.
+
+### v1.1 - Synchronized Arena and Voting Pass
+- Made map generation deterministic per map so every client sees the same cover, catwalks, rubble, and warehouse props.
+- Moved mode and map voting into a dedicated voting screen.
+- Removed knife from gameplay and the weapon UI.
+- Removed bullet trails while keeping muzzle flash and hit markers.
+- Added username labels above remote players.
+- Added stronger red damage feedback, reload motion, and shooting kick animations.
+- Reset gun ammo on round changes so players are not stuck empty forever.

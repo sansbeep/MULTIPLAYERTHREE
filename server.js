@@ -200,9 +200,7 @@ io.on('connection', (socket) => {
     if (!attacker || !target || targetId === socket.id) return;
 
     let hitDamage = Math.max(0, Math.min(Number(damage) || 0, 100));
-    if (weapon === 'knife') {
-      hitDamage = headshot ? 100 : 50;
-    } else if (headshot) {
+    if (headshot) {
       hitDamage *= 2;
     }
     target.health = Math.max(0, target.health - hitDamage);
