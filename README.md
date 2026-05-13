@@ -1,6 +1,6 @@
-# MULTIPLAYERTHREE
+# Trigger Bloxxy
 
-A browser-based multiplayer FPS prototype built with Three.js, Node.js, and Socket.io. It supports free-for-all Battle rounds, Co-Op zombie waves, voting, map selection, weapons, grenades, settings, and Render deployment.
+A blocky browser-based multiplayer FPS built with Three.js, Node.js, and Socket.io. It supports lobbies, free-for-all Battle rounds, Co-Op zombie waves, voting, map selection, detailed guns, grenades, settings, and Render deployment.
 
 ## Running Locally
 
@@ -97,3 +97,12 @@ npm start
 - Added username labels above remote players.
 - Added stronger red damage feedback, reload motion, and shooting kick animations.
 - Reset gun ammo on round changes so players are not stuck empty forever.
+
+### v1.2 - Trigger Bloxxy Lobby Pass
+- Renamed the game to Trigger Bloxxy.
+- Added a blocky title menu with lobby selection and an animated blocky gun intro.
+- Added a blocky gun favicon.
+- Expanded Hydro Dream into a larger warehouse with more loading bays, crane rails, office space, forklifts, pumps, and cover.
+- Added animated water surfaces with foam strips.
+- Prevented ground snapping from teleporting players onto catwalks and bridges from below.
+- Made player rigs more blocky while keeping guns detailed.

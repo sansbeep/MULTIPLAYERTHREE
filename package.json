@@ -2,7 +2,7 @@
   "name": "multiplayer-three-fps",
   "version": "1.0.0",
   "private": true,
-  "description": "Multiplayer Three.js FPS prototype with Socket.io networking.",
+  "description": "Trigger Bloxxy, a blocky multiplayer Three.js FPS with Socket.io networking.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

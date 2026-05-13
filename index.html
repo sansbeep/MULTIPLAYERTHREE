@@ -4,7 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Multiplayer Three.js FPS</title>
+  <title>Trigger Bloxxy</title>
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%2310181d'/%3E%3Crect x='10' y='24' width='30' height='14' fill='%23d6a658'/%3E%3Crect x='37' y='28' width='17' height='5' fill='%23e8edf3'/%3E%3Crect x='18' y='38' width='9' height='14' fill='%237a5a24'/%3E%3Crect x='13' y='18' width='16' height='6' fill='%234e5960'/%3E%3C/svg%3E">
   <style>
     html,
     body {
@@ -343,6 +345,39 @@
       pointer-events: none;
     }
 
+    #shopPanel {
+      position: absolute;
+      left: 50%;
+      bottom: 82px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 2px solid rgba(255, 226, 179, 0.35);
+      background: rgba(8, 12, 14, 0.68);
+      backdrop-filter: blur(8px);
+      pointer-events: auto;
+    }
+
+    #shopPanel strong {
+      padding: 0 8px;
+      color: #ffe2b3;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    #shopPanel button {
+      min-width: 78px;
+      height: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 0;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+    }
+
     #roundPanel {
       position: absolute;
       right: 18px;
@@ -518,7 +553,7 @@
     }
 
     #loginBox {
-      width: min(520px, calc(100vw - 32px));
+      width: min(760px, calc(100vw - 32px));
       max-height: min(680px, calc(100vh - 40px));
       overflow-y: auto;
       padding: 18px;
@@ -597,6 +632,99 @@
       font-size: 12px;
     }
 
+    #profileSummary {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 12px 0 8px;
+      padding: 9px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 13px;
+    }
+
+    #menuShop {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .shopCard {
+      min-height: 132px;
+      padding: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 0;
+      background: rgba(255, 255, 255, 0.065);
+      color: #eef5ff;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .shopCard:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 226, 179, 0.65);
+      background: rgba(255, 226, 179, 0.12);
+    }
+
+    .shopCard.owned {
+      border-color: rgba(79, 218, 176, 0.56);
+    }
+
+    .shopCard.equipped {
+      border-color: rgba(255, 226, 179, 0.92);
+      box-shadow: inset 0 0 0 1px rgba(255, 226, 179, 0.25);
+    }
+
+    .shopCard strong {
+      font-size: 13px;
+    }
+
+    .shopCard small {
+      color: rgba(255, 255, 255, 0.62);
+      line-height: 1.25;
+    }
+
+    .shopPrice {
+      color: #ffe2b3;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .gunPreview {
+      position: relative;
+      height: 42px;
+      margin: 4px 0;
+    }
+
+    .gunPreview span {
+      position: absolute;
+      display: block;
+      border-radius: 0;
+      background: linear-gradient(180deg, #859199, #22282d);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .gunPreview .body { left: 30px; top: 17px; width: 82px; height: 16px; }
+    .gunPreview .stock { left: 5px; top: 20px; width: 34px; height: 12px; background: linear-gradient(180deg, #445057, #15191d); }
+    .gunPreview .barrel { left: 108px; top: 21px; width: 54px; height: 5px; background: #161b1f; }
+    .gunPreview .mag { left: 66px; top: 30px; width: 16px; height: 22px; transform: rotate(-7deg); background: #9e7c44; }
+    .gunPreview .optic { left: 55px; top: 8px; width: 42px; height: 8px; background: #1a2024; }
+
+    .gunPreview.shotgun .barrel { width: 42px; height: 9px; top: 19px; }
+    .gunPreview.shotgun .optic { display: none; }
+    .gunPreview.sniper .barrel { width: 78px; }
+    .gunPreview.sniper .optic { width: 58px; height: 11px; left: 48px; top: 5px; }
+    .gunPreview.smg .body { width: 62px; }
+    .gunPreview.smg .barrel { left: 88px; width: 34px; }
+    .gunPreview.smg .mag { height: 28px; }
+    .gunPreview.dmr .body { width: 92px; }
+    .gunPreview.dmr .barrel { width: 68px; }
+
     .slot {
       min-width: 112px;
       padding: 8px 10px;
@@ -612,6 +740,11 @@
       color: #fff;
       border-color: rgba(242, 204, 96, 0.9);
       background: rgba(242, 204, 96, 0.18);
+    }
+
+    .slot.locked {
+      opacity: 0.42;
+      filter: grayscale(0.7);
     }
 
     #notice {
@@ -765,9 +898,9 @@
       display: grid;
       place-items: center;
       background:
-        linear-gradient(180deg, rgba(7, 12, 14, 0.4), rgba(7, 12, 14, 0.9)),
-        radial-gradient(circle at 50% 18%, rgba(255, 229, 175, 0.2), transparent 34%),
-        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 12px);
+        linear-gradient(180deg, rgba(7, 12, 14, 0.34), rgba(7, 12, 14, 0.92)),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 32px, rgba(0, 0, 0, 0.05) 32px 64px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 32px, transparent 32px 64px);
       z-index: 8;
       pointer-events: auto;
     }
@@ -775,19 +908,24 @@
     #introBox {
       width: min(760px, calc(100vw - 34px));
       padding: 34px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(10, 15, 18, 0.7);
+      border-radius: 0;
+      border: 4px solid rgba(255, 226, 179, 0.55);
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 30%),
+        rgba(10, 15, 18, 0.82);
       box-shadow: 0 30px 90px rgba(0, 0, 0, 0.48);
       color: #f6f2e8;
       text-align: center;
+      overflow: hidden;
     }
 
     #introBox h1 {
       margin: 0 0 10px;
       font-size: clamp(42px, 9vw, 104px);
       line-height: 0.86;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-shadow: 5px 5px 0 rgba(0, 0, 0, 0.45);
     }
 
     #introBox p {
@@ -801,12 +939,161 @@
       min-width: 180px;
       height: 44px;
       border: 0;
-      border-radius: 999px;
+      border-radius: 0;
       background: #dfb25b;
       color: #111;
       font: inherit;
       font-weight: 900;
       cursor: pointer;
+    }
+
+    #introGun {
+      position: relative;
+      width: min(520px, 86vw);
+      height: 120px;
+      margin: 0 auto 20px;
+      image-rendering: pixelated;
+      filter: drop-shadow(12px 14px 0 rgba(0, 0, 0, 0.35));
+      animation: gunIntro 1800ms ease-out both;
+    }
+
+    #introGun span {
+      position: absolute;
+      display: block;
+      background: linear-gradient(180deg, #2d3539, #111518);
+      border: 3px solid rgba(255, 255, 255, 0.09);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    #introGun .body {
+      left: 95px;
+      top: 42px;
+      width: 250px;
+      height: 36px;
+      border-radius: 0;
+    }
+
+    #introGun .barrel {
+      left: 330px;
+      top: 51px;
+      width: 140px;
+      height: 12px;
+      border-radius: 0;
+      background: linear-gradient(180deg, #4b575b, #171c1e);
+    }
+
+    #introGun .stock {
+      left: 28px;
+      top: 50px;
+      width: 92px;
+      height: 24px;
+      transform: skewX(-18deg);
+    }
+
+    #introGun .grip {
+      left: 205px;
+      top: 72px;
+      width: 28px;
+      height: 58px;
+      transform: rotate(14deg);
+      transform-origin: top center;
+      border-radius: 0;
+    }
+
+    #introGun .mag {
+      left: 252px;
+      top: 72px;
+      width: 30px;
+      height: 64px;
+      transform: rotate(-7deg);
+      border-radius: 0;
+      background: linear-gradient(180deg, #8a7241, #33270f);
+    }
+
+    #introGun .optic {
+      left: 180px;
+      top: 22px;
+      width: 96px;
+      height: 20px;
+      border-radius: 0;
+      background: linear-gradient(180deg, #4b575b, #15191c);
+    }
+
+    #introGun::after {
+      content: "";
+      position: absolute;
+      left: 462px;
+      top: 42px;
+      width: 56px;
+      height: 30px;
+      background: radial-gradient(circle at left, rgba(255, 211, 110, 0.9), rgba(255, 121, 54, 0.35) 44%, transparent 72%);
+      opacity: 0;
+      animation: muzzleIntro 1800ms ease-out both;
+    }
+
+    #titleMenu {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    #lobbyInput {
+      min-height: 44px;
+      border-radius: 0;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      padding: 0 16px;
+      font: inherit;
+      outline: none;
+    }
+
+    #lobbyPresets {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    #lobbyPresets button {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 0;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.82);
+      padding: 7px 12px;
+      cursor: pointer;
+    }
+
+    @keyframes gunIntro {
+      from {
+        opacity: 0;
+        transform: translateY(36px) rotate(-4deg) scale(0.92);
+      }
+
+      60% {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes muzzleIntro {
+      54%, 64% {
+        opacity: 1;
+        transform: scaleX(1);
+      }
+
+      to {
+        opacity: 0;
+        transform: scaleX(1.45);
+      }
     }
   </style>
 </head>
@@ -886,6 +1173,15 @@
       <div class="slot active" data-weapon="assault">1 Assault</div>
       <div class="slot" data-weapon="shotgun">2 Shotgun</div>
       <div class="slot" data-weapon="sniper">3 Sniper</div>
+      <div class="slot" data-weapon="smg">4 SMG</div>
+      <div class="slot" data-weapon="dmr">5 DMR</div>
+    </div>
+    <div id="shopPanel">
+      <strong>Shop</strong>
+      <button data-buy="smg">SMG</button>
+      <button data-buy="dmr">DMR</button>
+      <button data-buy="shotgun">Shotgun</button>
+      <button data-buy="sniper">Sniper</button>
     </div>
     <div id="roundPanel">
       <div id="roundTitle">Round Vote</div>
@@ -902,14 +1198,14 @@
         <button data-mode="coop">Co-Op</button>
       </div>
       <div id="mapVoteGraph">
-        <div class="voteRow"><span>Hydro</span><span class="voteTrack"><span id="hydroFill"
+        <div class="voteRow"><span>Forest</span><span class="voteTrack"><span id="hydroFill"
               class="voteFill"></span></span><strong id="hydroCount">0</strong></div>
-        <div class="voteRow"><span>Mall</span><span class="voteTrack"><span id="mallFill"
+        <div class="voteRow"><span>Ship</span><span class="voteTrack"><span id="mallFill"
               class="voteFill battle"></span></span><strong id="mallCount">0</strong></div>
       </div>
       <div id="mapVoteButtons">
-        <button data-map="hydro">Hydro Warehouse</button>
-        <button data-map="arcade">Afterhours Mall</button>
+        <button data-map="hydro">Trigger Forest</button>
+        <button data-map="arcade">Trigger Ship</button>
       </div>
     </div>
     <div id="grenadeHud">Grenades: <strong id="grenades">3</strong> · G</div>
@@ -919,22 +1215,64 @@
         <h2>Enter Callsign</h2>
         <input id="usernameInput" maxlength="18" placeholder="Username">
         <div class="mapPick">
-          <button class="mapButton active" data-map="hydro" type="button">Hydro Dream<small>Flooded warehouse, catwalks, conveyors.</small></button>
-          <button class="mapButton" data-map="arcade" type="button">Afterhours Mall<small>Three floors, ruined shops, atrium rubble.</small></button>
+          <button class="mapButton active" data-map="hydro" type="button">Trigger Forest<small>Dense block woods, rocks, mine cover.</small></button>
+          <button class="mapButton" data-map="arcade" type="button">Trigger Ship<small>Blocky cargo ship over deep water.</small></button>
+        </div>
+        <div id="profileSummary">
+          <span>Profile: <strong id="profileName">Guest</strong></span>
+          <span>Credits: <strong id="profileCredits">0</strong></span>
+        </div>
+        <div id="menuShop" aria-label="Weapon shop">
+          <button class="shopCard owned equipped" data-buy="assault" type="button">
+            <div class="gunPreview assault"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Assault Rifle</strong><small>Starter auto rifle. Always unlocked.</small><span class="shopPrice">Owned</span>
+          </button>
+          <button class="shopCard" data-buy="smg" type="button">
+            <div class="gunPreview smg"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Block SMG</strong><small>Fast close-range spray.</small><span class="shopPrice">150 credits</span>
+          </button>
+          <button class="shopCard" data-buy="shotgun" type="button">
+            <div class="gunPreview shotgun"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Shotgun</strong><small>Wide burst for tight fights.</small><span class="shopPrice">250 credits</span>
+          </button>
+          <button class="shopCard" data-buy="dmr" type="button">
+            <div class="gunPreview dmr"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Block DMR</strong><small>Precise semi-auto hits.</small><span class="shopPrice">350 credits</span>
+          </button>
+          <button class="shopCard" data-buy="sniper" type="button">
+            <div class="gunPreview sniper"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Sniper</strong><small>Best scope and highest damage.</small><span class="shopPrice">500 credits</span>
+          </button>
         </div>
         <button id="joinButton">Join Match</button>
       </div>
     </div>
     <div id="notice">
-      <h1>ARENA FPS</h1>
+      <h1>TRIGGER BLOXXY</h1>
       <p>Click to lock pointer. WASD move, Shift sprint, Ctrl slide, Space jump, mouse shoots, right mouse aims, R reloads.</p>
     </div>
   </div>
   <div id="introOverlay">
     <div id="introBox">
-      <h1>HYDRO AFTERHOURS</h1>
-      <p>Wake up in an abandoned industrial dream: flooded loading bays, empty mall balconies, soft lights, and the hum of machines that should have stopped years ago.</p>
-      <button id="introStart" type="button">Enter Match</button>
+      <div id="introGun" aria-hidden="true">
+        <span class="stock"></span>
+        <span class="body"></span>
+        <span class="barrel"></span>
+        <span class="grip"></span>
+        <span class="mag"></span>
+        <span class="optic"></span>
+      </div>
+      <h1>TRIGGER BLOXXY</h1>
+      <p>Blocky arenas, detailed guns, private lobbies. Choose a lobby, squad up, then vote your way into the forest or the ship.</p>
+      <div id="titleMenu">
+        <input id="lobbyInput" maxlength="24" value="public" placeholder="Lobby name">
+        <button id="introStart" type="button">Enter Lobby</button>
+        <div id="lobbyPresets">
+          <button type="button" data-lobby="public">Public</button>
+          <button type="button" data-lobby="forest-party">Forest Party</button>
+          <button type="button" data-lobby="ship-crew">Ship Crew</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -987,6 +1325,7 @@
     const explosions = [];
     const colliders = [];
     const terrainSurfaces = [];
+    const waterSurfaces = [];
     const interactiveProps = [];
     const hitMarkers = [];
     const keys = new Set();
@@ -1014,6 +1353,7 @@
       grenadeCooldown: 0,
       vote: null,
       weapon: 'assault',
+      color: '#59c3ff',
       shooting: false,
       lastNetworkShotAt: 0,
     };
@@ -1070,6 +1410,40 @@
         reserve: 15,
         reloadTime: 1800,
       },
+      smg: {
+        label: 'Block SMG',
+        damage: 12,
+        fireDelay: 58,
+        automatic: true,
+        spread: 0.032,
+        pellets: 1,
+        recoil: 0.026,
+        range: 92,
+        adsFov: 60,
+        hipFov: 76,
+        adsOffset: new THREE.Vector3(0.08, -0.27, -0.72),
+        hipOffset: new THREE.Vector3(0.32, -0.34, -0.62),
+        magazine: 40,
+        reserve: 120,
+        reloadTime: 1150,
+      },
+      dmr: {
+        label: 'Block DMR',
+        damage: 42,
+        fireDelay: 280,
+        automatic: false,
+        spread: 0.008,
+        pellets: 1,
+        recoil: 0.09,
+        range: 190,
+        adsFov: 42,
+        hipFov: 76,
+        adsOffset: new THREE.Vector3(0.05, -0.26, -0.86),
+        hipOffset: new THREE.Vector3(0.36, -0.35, -0.76),
+        magazine: 12,
+        reserve: 48,
+        reloadTime: 1500,
+      },
     };
 
     const weaponState = {
@@ -1080,6 +1454,8 @@
         assault: { current: weapons.assault.magazine, reserve: weapons.assault.reserve },
         shotgun: { current: weapons.shotgun.magazine, reserve: weapons.shotgun.reserve },
         sniper: { current: weapons.sniper.magazine, reserve: weapons.sniper.reserve },
+        smg: { current: weapons.smg.magazine, reserve: weapons.smg.reserve },
+        dmr: { current: weapons.dmr.magazine, reserve: weapons.dmr.reserve },
       },
       recoil: 0,
       muzzle: 0,
@@ -1112,11 +1488,16 @@
       loginOverlay: document.getElementById('loginOverlay'),
       usernameInput: document.getElementById('usernameInput'),
       joinButton: document.getElementById('joinButton'),
+      profileName: document.getElementById('profileName'),
+      profileCredits: document.getElementById('profileCredits'),
+      menuShopButtons: Array.from(document.querySelectorAll('#menuShop .shopCard')),
       damageVignette: document.getElementById('damageVignette'),
       damageNumbers: document.getElementById('damageNumbers'),
       deathScreen: document.getElementById('deathScreen'),
       introOverlay: document.getElementById('introOverlay'),
       introStart: document.getElementById('introStart'),
+      lobbyInput: document.getElementById('lobbyInput'),
+      lobbyPresets: Array.from(document.querySelectorAll('#lobbyPresets button')),
       scope: document.getElementById('scope'),
       crosshair: document.getElementById('crosshair'),
       slots: Array.from(document.querySelectorAll('.slot')),
@@ -1145,6 +1526,7 @@
       frameCount: 0,
       lastFpsAt: performance.now(),
     };
+    let selectedLobby = 'public';
 
     function refreshPerformanceDisplay() {
       ui.perfFps.textContent = Math.max(0, Math.round(performanceStats.fps));
@@ -1250,6 +1632,8 @@
       weaponState.ammo.assault = { current: weapons.assault.magazine, reserve: weapons.assault.reserve };
       weaponState.ammo.shotgun = { current: weapons.shotgun.magazine, reserve: weapons.shotgun.reserve };
       weaponState.ammo.sniper = { current: weapons.sniper.magazine, reserve: weapons.sniper.reserve };
+      weaponState.ammo.smg = { current: weapons.smg.magazine, reserve: weapons.smg.reserve };
+      weaponState.ammo.dmr = { current: weapons.dmr.magazine, reserve: weapons.dmr.reserve };
       weaponState.reloadWeapon = null;
       weaponState.reloadingUntil = 0;
       updateAmmoDisplay();
@@ -1293,7 +1677,17 @@
     });
 
     ui.introStart.addEventListener('click', () => {
-      ui.introOverlay.style.display = 'none';
+      enterLobby();
+    });
+
+    ui.lobbyInput.addEventListener('keydown', (event) => {
+      if (event.code === 'Enter') enterLobby();
+    });
+
+    ui.lobbyPresets.forEach((button) => {
+      button.addEventListener('click', () => {
+        ui.lobbyInput.value = button.dataset.lobby;
+      });
     });
 
     ui.settingsClose.addEventListener('click', () => {
@@ -1348,9 +1742,12 @@
     camera.add(weaponModel.group);
     updateWeaponVisual(localPlayer.weapon);
 
-    socket.on('init', ({ id, players, round, zombies: initialZombies }) => {
+    socket.on('init', ({ id, players, round, zombies: initialZombies, lobby }) => {
       localPlayer.id = id;
+      if (lobby) selectedLobby = lobby;
       resetAmmo();
+      for (const existingId of Array.from(playerMeshes.keys())) removeRemotePlayer(existingId);
+      playerTargets.clear();
       for (const player of players) {
         playerNames.set(player.id, player.name);
         if (player.id !== id) addOrUpdateRemotePlayer(player);
@@ -1417,6 +1814,7 @@
         ui.health.textContent = 100;
         updateHealthBar();
         ui.deathScreen.classList.remove('active');
+        resetAmmo();
       }
       if (by === localPlayer.id) {
         localPlayer.score = score;
@@ -1442,6 +1840,8 @@
       if (event.code === 'Digit1') setWeapon('assault');
       if (event.code === 'Digit2') setWeapon('shotgun');
       if (event.code === 'Digit3') setWeapon('sniper');
+      if (event.code === 'Digit4') setWeapon('smg');
+      if (event.code === 'Digit5') setWeapon('dmr');
       if (event.code === settings.keybinds.shoot) localPlayer.shooting = true;
       if (event.code === settings.keybinds.aim) weaponState.zooming = true;
       if (event.code === settings.keybinds.reload) reloadWeapon();
@@ -1466,6 +1866,12 @@
         setMap(button.dataset.map);
         socket.emit('voteMap', button.dataset.map);
         ui.mapVoteButtons.forEach((b) => b.classList.toggle('active', b === button));
+      });
+    });
+    document.querySelectorAll('#shopPanel button').forEach((button) => {
+      button.addEventListener('click', () => {
+        setWeapon(button.dataset.buy);
+        ui.status.textContent = `Equipped ${weapons[localPlayer.weapon].label}`;
       });
     });
     ui.joinButton.addEventListener('click', joinWithName);
@@ -1504,6 +1910,18 @@
     animate();
     requestPing();
     window.setInterval(requestPing, 3000);
+
+    function enterLobby() {
+      selectedLobby = sanitizeLobbyName(ui.lobbyInput.value);
+      ui.lobbyInput.value = selectedLobby;
+      socket.emit('joinLobby', selectedLobby, () => {
+        ui.introOverlay.style.display = 'none';
+      });
+    }
+
+    function sanitizeLobbyName(value) {
+      return String(value || 'public').replace(/[^\w -]/g, '').trim().slice(0, 24) || 'public';
+    }
 
     function joinWithName() {
       const clean = ui.usernameInput.value.trim().replace(/[^\w .-]/g, '').slice(0, 18) || `Player ${Math.floor(rand() * 9000 + 1000)}`;
@@ -1611,6 +2029,7 @@
       }
       colliders.length = 0;
       terrainSurfaces.length = 0;
+      waterSurfaces.length = 0;
       interactiveProps.length = 0;
     }
 
@@ -1626,34 +2045,164 @@
       setMapSeed(activeMap);
       scene.background = new THREE.Color(arcade ? 0xd7c9d8 : 0x9bb5bd);
       scene.fog = new THREE.Fog(arcade ? 0xd7c9d8 : 0x9bb5bd, 38, 165);
-      const floor = new THREE.Mesh(
-        new THREE.PlaneGeometry(260, 260, 1, 1),
-        texturedMaterial(arcade ? 0xd5c8bd : 0x58665d, 0.96, 0.02, arcade ? 'tile' : 'concrete')
-      );
-      floor.rotation.x = -Math.PI / 2;
-      floor.receiveShadow = true;
-      addArena(floor);
-
-      const grid = new THREE.GridHelper(260, 52, arcade ? 0xf4e8dc : 0xded8be, arcade ? 0xc9b8d2 : 0x79886d);
-      grid.position.y = 0.012;
-      addArena(grid);
-
-      const runway = new THREE.Mesh(
-        new THREE.PlaneGeometry(42, 180),
-        new THREE.MeshStandardMaterial({ color: 0x3d4545, roughness: 0.9, transparent: true, opacity: 0.44 })
-      );
-      runway.rotation.x = -Math.PI / 2;
-      runway.rotation.z = Math.PI / 2;
-      runway.position.y = 0.018;
-      runway.receiveShadow = true;
-      addArena(runway);
 
       if (arcade) {
-        addAfterhoursMall();
+        addTriggerShip();
       } else {
-        addHydroWarehouse();
+        addTriggerForest();
       }
       addBoundaryWalls();
+    }
+
+    function addTriggerForest() {
+      scene.background = new THREE.Color(0x9fc5a6);
+      scene.fog = new THREE.Fog(0x9fc5a6, 34, 185);
+      const grass = texturedMaterial(0x4d7a3f, 0.98, 0.02, 'tile');
+      const trunkMat = texturedMaterial(0x6b4a2d, 0.92, 0.02, 'wall');
+      const leafMats = [0x2d6b37, 0x3d7d3e, 0x24582f, 0x4d8d42].map((c) => texturedMaterial(c, 0.95, 0.01, 'wall'));
+      const rockMat = texturedMaterial(0x72766e, 0.96, 0.02, 'concrete');
+      const dirtMat = texturedMaterial(0x6a5134, 0.95, 0.02, 'wall');
+
+      const forestFloor = new THREE.Mesh(new THREE.PlaneGeometry(420, 420, 1, 1), grass);
+      forestFloor.rotation.x = -Math.PI / 2;
+      forestFloor.position.y = 0.025;
+      forestFloor.receiveShadow = true;
+      addArena(forestFloor);
+
+      for (let i = 0; i < 245; i++) {
+        const x = (rand() - 0.5) * 386;
+        const z = (rand() - 0.5) * 386;
+        if (Math.hypot(x, z) < 16) continue;
+        addBlockTree(x, z, 4 + rand() * 5, leafMats[Math.floor(rand() * leafMats.length)]);
+      }
+
+      for (let i = 0; i < 120; i++) {
+        addBlockRock((rand() - 0.5) * 378, (rand() - 0.5) * 378, 1 + rand() * 2.8);
+      }
+
+      const mine = new THREE.Group();
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(28, 14, 8), rockMat);
+      wall.position.set(0, 7, -138);
+      const hole = new THREE.Mesh(new THREE.BoxGeometry(10, 7, 1), new THREE.MeshStandardMaterial({ color: 0x111213, roughness: 0.9 }));
+      hole.position.set(0, 3.6, -142.2);
+      const beamTop = new THREE.Mesh(new THREE.BoxGeometry(15, 1, 1.2), trunkMat);
+      beamTop.position.set(0, 7.4, -143);
+      const beamL = new THREE.Mesh(new THREE.BoxGeometry(1, 7, 1.2), trunkMat);
+      beamL.position.set(-6.2, 3.7, -143);
+      const beamR = beamL.clone();
+      beamR.position.x = 6.2;
+      mine.add(wall, hole, beamTop, beamL, beamR);
+      addArena(mine);
+      addCollider(wall, 0.04);
+
+      for (const [x, z] of [[-42, -36], [58, -22], [-76, 62], [90, 72], [18, 118], [-118, -86]]) addHealthPickup(x, z);
+
+      function addBlockTree(x, z, h, leafMat) {
+        const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.4, h, 1.4), trunkMat);
+        trunk.position.set(x, h / 2, z);
+        trunk.castShadow = true;
+        addArena(trunk);
+        addCollider(trunk, 0.03);
+        const crownLevels = [
+          [0, h + 0.8, 5.2],
+          [0, h + 2.4, 4.2],
+          [0, h + 3.8, 2.8],
+        ];
+        for (const [, y, s] of crownLevels) {
+          const leaves = new THREE.Mesh(new THREE.BoxGeometry(s, 1.6, s), leafMat);
+          leaves.position.set(x + (rand() - 0.5) * 0.8, y, z + (rand() - 0.5) * 0.8);
+          leaves.castShadow = true;
+          leaves.receiveShadow = true;
+          addArena(leaves);
+        }
+      }
+
+      function addBlockRock(x, z, s) {
+        const rock = new THREE.Group();
+        const pieces = 2 + Math.floor(rand() * 4);
+        for (let i = 0; i < pieces; i++) {
+          const w = s * (0.8 + rand() * 1.4);
+          const h = s * (0.45 + rand() * 1.1);
+          const d = s * (0.8 + rand() * 1.4);
+          const part = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), i % 3 === 0 ? dirtMat : rockMat);
+          part.position.set((rand() - 0.5) * s * 1.3, h / 2, (rand() - 0.5) * s * 1.3);
+          part.rotation.y = Math.round(rand() * 3) * Math.PI / 2;
+          part.castShadow = true;
+          part.receiveShadow = true;
+          rock.add(part);
+        }
+        rock.position.set(x, 0, z);
+        addArena(rock);
+        rock.children.forEach((child) => addCollider(child, 0.03));
+      }
+    }
+
+    function addTriggerShip() {
+      scene.background = new THREE.Color(0x86b4c8);
+      scene.fog = new THREE.Fog(0x86b4c8, 60, 285);
+      const waterMat = new THREE.MeshStandardMaterial({ color: 0x0a4865, emissive: 0x06283c, emissiveIntensity: 0.35, roughness: 0.04, metalness: 0.02, transparent: true, opacity: 0.82 });
+      createOpenWater(560, 560, waterMat);
+
+      const hullMat = texturedMaterial(0x39464c, 0.74, 0.22, 'metal');
+      const deckMat = texturedMaterial(0x8a6c45, 0.88, 0.05, 'wall');
+      const ship = new THREE.Group();
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(232, 1.2, 72), deckMat);
+      deck.position.y = 2.2;
+      const hull = new THREE.Mesh(new THREE.BoxGeometry(246, 8, 82), hullMat);
+      hull.position.y = -1.8;
+      const bow = new THREE.Mesh(new THREE.BoxGeometry(28, 5.2, 64), hullMat);
+      bow.position.set(136, 0.2, 0);
+      bow.rotation.y = Math.PI / 4;
+      const stern = new THREE.Mesh(new THREE.BoxGeometry(24, 6, 74), hullMat);
+      stern.position.set(-136, 0.4, 0);
+      ship.add(hull, deck, bow, stern);
+      addArena(ship);
+      addCollider(deck, 0.04, { standable: false });
+      terrainSurfaces.push({ type: 'bridge', x1: -118, x2: 120, z1: -38, z2: 38, height: 2.85 });
+
+      const cabinMat = texturedMaterial(0xe8e2d4, 0.74, 0.08, 'wall');
+      for (const [x, y, z, w, h, d] of [[-56, 6.4, 0, 28, 7, 22], [-76, 11.2, 0, 18, 4.5, 16], [60, 5.8, -18, 24, 5, 12]]) {
+        const cabin = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cabinMat);
+        cabin.position.set(x, y, z);
+        cabin.castShadow = true;
+        cabin.receiveShadow = true;
+        addArena(cabin);
+        addCollider(cabin, 0.04);
+      }
+
+      const containerMats = [0x9e3434, 0x2f609d, 0xd0a23f, 0x3a7f57, 0x7b4b8f].map((c) => texturedMaterial(c, 0.7, 0.2, 'metal'));
+      for (let i = 0; i < 64; i++) {
+        const cont = new THREE.Mesh(new THREE.BoxGeometry(10, 4.2, 5), containerMats[i % containerMats.length]);
+        cont.position.set(-92 + (i % 16) * 12.5, 4.9 + Math.floor(i / 32) * 4.4, -24 + Math.floor((i % 32) / 16) * 48);
+        cont.rotation.y = (i % 5 === 0) ? Math.PI / 2 : 0;
+        cont.castShadow = true;
+        cont.receiveShadow = true;
+        addArena(cont);
+        addCollider(cont, 0.04);
+      }
+
+      const railMat = texturedMaterial(0x22282b, 0.55, 0.42, 'metal');
+      for (const z of [-33, 33]) {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(232, 0.35, 0.45), railMat);
+        rail.position.set(0, 4.2, z);
+        addArena(rail);
+      }
+      for (const x of [-92, -52, -12, 28, 68, 98]) {
+        const mast = new THREE.Mesh(new THREE.BoxGeometry(1.6, 18, 1.6), railMat);
+        mast.position.set(x, 11.5, x % 2 ? -27 : 27);
+        addArena(mast);
+        addCollider(mast, 0.03);
+      }
+      for (const [x, z] of [[-86, 18], [-28, -18], [38, 22], [88, -18]]) addHealthPickup(x, z);
+
+      function createOpenWater(w, d, material) {
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d, 80, 80), material);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.y = -4.2;
+        mesh.userData.baseWater = Array.from(mesh.geometry.attributes.position.array);
+        waterSurfaces.push(mesh);
+        addArena(mesh);
+      }
     }
 
     function addHydroWarehouse() {
@@ -1662,15 +2211,15 @@
       const steel = texturedMaterial(0x59636a, 0.55, 0.42, 'metal');
       const beltMat = texturedMaterial(0x11171a, 0.8, 0.18, 'rubber');
       const crateMat = texturedMaterial(0x7b6142, 0.86, 0.04, 'wall');
-      const waterMat = new THREE.MeshStandardMaterial({ color: 0x2b8aa1, roughness: 0.2, metalness: 0.04, transparent: true, opacity: 0.7 });
+      const waterMat = new THREE.MeshStandardMaterial({ color: 0x2b8aa1, emissive: 0x0a3340, emissiveIntensity: 0.22, roughness: 0.08, metalness: 0.02, transparent: true, opacity: 0.68 });
       const glowMat = new THREE.MeshBasicMaterial({ color: 0xf2d994 });
 
-      const roof = box(178, 0.7, 150, 0, 15.8, 0, texturedMaterial(0x4c5557, 0.8, 0.28, 'ceiling'));
+      const roof = box(250, 0.7, 220, 0, 15.8, 0, texturedMaterial(0x4c5557, 0.8, 0.28, 'ceiling'));
       addArena(roof);
-      const backWall = box(178, 13, 2.2, 0, 6.5, -76, darkConcrete);
-      const frontWall = box(178, 13, 2.2, 0, 6.5, 76, darkConcrete);
-      const leftWall = box(2.2, 13, 150, -89, 6.5, 0, darkConcrete);
-      const rightWall = box(2.2, 13, 150, 89, 6.5, 0, darkConcrete);
+      const backWall = box(250, 13, 2.2, 0, 6.5, -110, darkConcrete);
+      const frontWall = box(250, 13, 2.2, 0, 6.5, 110, darkConcrete);
+      const leftWall = box(2.2, 13, 220, -125, 6.5, 0, darkConcrete);
+      const rightWall = box(2.2, 13, 220, 125, 6.5, 0, darkConcrete);
       for (const wall of [backWall, frontWall, leftWall, rightWall]) {
         wall.castShadow = true;
         wall.receiveShadow = true;
@@ -1678,33 +2227,31 @@
         addCollider(wall, 0.05);
       }
 
-      for (const x of [-66, -38, -10, 18, 46, 74]) {
-        for (const z of [-56, -18, 20, 58]) {
+      for (const x of [-102, -70, -38, -6, 26, 58, 90]) {
+        for (const z of [-84, -48, -12, 24, 60, 92]) {
           const pillar = box(1.4, 15, 1.4, x, 7.5, z, steel);
           addArena(pillar);
           addCollider(pillar, 0.04);
         }
       }
 
-      for (const z of [-52, 52]) {
-        const channel = new THREE.Mesh(new THREE.BoxGeometry(164, 0.08, 9), waterMat);
-        channel.position.set(0, 0.045, z);
-        addArena(channel);
-        const lipA = box(164, 0.45, 0.5, 0, 0.22, z - 4.75, concrete);
-        const lipB = box(164, 0.45, 0.5, 0, 0.22, z + 4.75, concrete);
+      for (const z of [-78, 78]) {
+        const channel = createWaterSurface(230, 13, 0, z, waterMat);
+        const lipA = box(230, 0.45, 0.5, 0, 0.22, z - 6.9, concrete);
+        const lipB = box(230, 0.45, 0.5, 0, 0.22, z + 6.9, concrete);
         addArena(lipA);
         addArena(lipB);
         addCollider(lipA, 0.02);
         addCollider(lipB, 0.02);
       }
 
-      addCatwalk(-58, -56, 116, 6, 5.2, 0);
-      addCatwalk(48, 30, 84, 6, 7.7, Math.PI / 2);
-      addCatwalk(-8, 58, 92, 6, 4.6, 0);
-      addRamp(-18, -56, 0, -8, -36, 5.2);
-      addRamp(38, 30, 0, 18, 8, 7.7);
+      addCatwalk(-86, -82, 150, 6, 5.2, 0);
+      addCatwalk(72, 30, 118, 6, 7.7, Math.PI / 2);
+      addCatwalk(-8, 92, 132, 6, 4.6, 0);
+      addRamp(-108, -96, 0, -86, -58, 5.2);
+      addRamp(96, 30, 0, 46, 30, 7.7);
 
-      for (const [x, z, len, rot] of [[-36, 0, 72, 0], [42, -28, 62, Math.PI / 2], [28, 50, 70, 0]]) {
+      for (const [x, z, len, rot] of [[-44, 0, 100, 0], [70, -34, 92, Math.PI / 2], [28, 52, 98, 0], [-86, 42, 80, Math.PI / 2]]) {
         const belt = new THREE.Group();
         const base = box(7, 0.55, len, 0, 0.55, 0, steel);
         const top = box(6.4, 0.16, len - 1.2, 0, 0.96, 0, beltMat);
@@ -1717,9 +2264,9 @@
         addCollider(base, 0.04);
       }
 
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 8; col++) {
-          const shelf = box(2.4, 5.4, 10, -70 + col * 8.5, 2.7, -28 + row * 14, steel);
+      for (let row = 0; row < 7; row++) {
+        for (let col = 0; col < 10; col++) {
+          const shelf = box(2.4, 5.4, 10, -108 + col * 8.5, 2.7, -54 + row * 14, steel);
           shelf.rotation.y = row % 2 ? 0.02 : -0.02;
           addArena(shelf);
           addCollider(shelf, 0.04);
@@ -1731,16 +2278,16 @@
         }
       }
 
-      for (let i = 0; i < 38; i++) {
+      for (let i = 0; i < 62; i++) {
         const crate = box(2 + rand() * 2.2, 1.2 + rand() * 1.7, 2 + rand() * 2.2,
-          18 + (rand() - 0.5) * 118, 0, -4 + (rand() - 0.5) * 96, crateMat);
+          18 + (rand() - 0.5) * 178, 0, -4 + (rand() - 0.5) * 156, crateMat);
         crate.position.y = crate.geometry.parameters.height / 2;
         crate.rotation.y = rand() * Math.PI;
         addArena(crate);
         addCollider(crate, 0.05);
       }
 
-      for (const [x, z] of [[-72, -64], [-32, 64], [12, -64], [62, 64]]) {
+      for (const [x, z] of [[-108, -96], [-52, 96], [12, -96], [98, 96], [102, -22], [-96, 18]]) {
         const lamp = new THREE.PointLight(0xffd892, 1.7, 38, 1.7);
         lamp.position.set(x, 13.5, z);
         addArena(lamp);
@@ -1748,7 +2295,15 @@
         addArena(fixture);
       }
 
-      for (const [x, z] of [[-24, 18], [44, -8], [-64, 34], [68, -44], [6, 68]]) {
+      addWarehouseOffice(-104, 68);
+      addLoadingBays();
+      addOverheadCranes();
+      addForklift(86, -82, -0.25);
+      addForklift(-44, 34, 0.7);
+      addForklift(34, 88, -0.95);
+      addPumpCluster(96, 18);
+
+      for (const [x, z] of [[-24, 18], [44, -8], [-92, 34], [102, -44], [6, 102], [-118, -74]]) {
         addHealthPickup(x, z);
       }
 
@@ -1765,6 +2320,26 @@
         }
         if (Math.abs(rot) < 0.1) terrainSurfaces.push({ type: 'bridge', x1: x - width / 2, x2: x + width / 2, z1: z - length / 2, z2: z + length / 2, height: height + 0.22 });
         else terrainSurfaces.push({ type: 'bridge', x1: x - length / 2, x2: x + length / 2, z1: z - width / 2, z2: z + width / 2, height: height + 0.22 });
+      }
+
+      function createWaterSurface(length, width, x, z, material) {
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(length, width, 48, 6), material.clone());
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.set(x, 0.06, z);
+        mesh.receiveShadow = true;
+        mesh.userData.baseWater = Array.from(mesh.geometry.attributes.position.array);
+        waterSurfaces.push(mesh);
+        addArena(mesh);
+
+        const foamMat = new THREE.MeshBasicMaterial({ color: 0xbfeaff, transparent: true, opacity: 0.2 });
+        for (const offset of [-width / 2 + 0.45, width / 2 - 0.45]) {
+          const foam = new THREE.Mesh(new THREE.PlaneGeometry(length, 0.22), foamMat.clone());
+          foam.rotation.x = -Math.PI / 2;
+          foam.position.set(x, 0.075, z + offset);
+          waterSurfaces.push(foam);
+          addArena(foam);
+        }
+        return mesh;
       }
 
       function addRamp(x1, z1, h1, x2, z2, h2) {
@@ -1796,6 +2371,80 @@
         mesh.position.set(x, y, z);
         mesh.castShadow = true;
         return mesh;
+      }
+
+      function addWarehouseOffice(x, z) {
+        const officeMat = texturedMaterial(0x748082, 0.78, 0.14, 'wall');
+        const glass = new THREE.MeshStandardMaterial({ color: 0xa8d5e6, roughness: 0.08, metalness: 0.02, transparent: true, opacity: 0.48 });
+        const base = box(22, 5.2, 15, x, 2.6, z, officeMat);
+        const top = box(24, 0.45, 17, x, 5.45, z, steel);
+        const windowA = box(7.5, 2.2, 0.14, x - 5, 3.45, z - 7.65, glass);
+        const windowB = box(7.5, 2.2, 0.14, x + 5, 3.45, z - 7.65, glass);
+        const stairs = box(20, 0.32, 3.2, x + 19, 2.5, z - 2, steel);
+        stairs.rotation.z = -0.26;
+        addArena(base); addArena(top); addArena(windowA); addArena(windowB); addArena(stairs);
+        addCollider(base, 0.04);
+        terrainSurfaces.push({ type: 'bridge', x1: x - 12, x2: x + 12, z1: z - 8.5, z2: z + 8.5, height: 5.72 });
+        terrainSurfaces.push({ type: 'ramp', x1: x + 9, x2: x + 29, z1: z - 4, z2: z + 1, h1: 0, h2: 5.72 });
+      }
+
+      function addLoadingBays() {
+        for (const x of [-58, -30, -2, 26, 54]) {
+          const frame = box(18, 8.2, 0.5, x, 4.1, 75.2, steel);
+          const shutter = box(14, 5.8, 0.28, x, 3, 73.8, texturedMaterial(0x3a4244, 0.7, 0.38, 'metal'));
+          const dock = box(19, 0.75, 10, x, 0.38, 66, concrete);
+          addArena(frame); addArena(shutter); addArena(dock);
+          addCollider(frame, 0.04);
+          addCollider(dock, 0.02);
+        }
+      }
+
+      function addOverheadCranes() {
+        for (const z of [-28, 26]) {
+          const railA = box(170, 0.35, 0.35, 0, 12.2, z - 8, steel);
+          const railB = box(170, 0.35, 0.35, 0, 12.2, z + 8, steel);
+          const bridge = box(8, 0.5, 18, z < 0 ? -22 : 36, 11.8, z, steel);
+          const hookLine = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 3.4, 10), steel);
+          hookLine.position.set(bridge.position.x, 9.9, z);
+          const hook = box(1.1, 0.28, 0.55, bridge.position.x, 8.15, z, texturedMaterial(0xd6a658, 0.45, 0.5, 'metal'));
+          addArena(railA); addArena(railB); addArena(bridge); addArena(hookLine); addArena(hook);
+        }
+      }
+
+      function addForklift(x, z, rot) {
+        const bodyMat = texturedMaterial(0xd3a132, 0.58, 0.28, 'metal');
+        const tireMat = texturedMaterial(0x111111, 0.82, 0.12, 'rubber');
+        const fork = new THREE.Group();
+        fork.add(box(3.2, 1.3, 2.2, 0, 0.65, 0, bodyMat));
+        fork.add(box(1.2, 2.7, 1.4, -0.65, 1.8, 0.1, steel));
+        fork.add(box(0.16, 0.14, 3.8, 1.9, 0.36, -0.55, steel));
+        fork.add(box(0.16, 0.14, 3.8, 1.9, 0.36, 0.55, steel));
+        for (const wx of [-1.15, 1.1]) {
+          for (const wz of [-0.9, 0.9]) {
+            const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.24, 18), tireMat);
+            wheel.rotation.z = Math.PI / 2;
+            wheel.position.set(wx, 0.34, wz);
+            fork.add(wheel);
+          }
+        }
+        fork.position.set(x, 0, z);
+        fork.rotation.y = rot;
+        addArena(fork);
+      }
+
+      function addPumpCluster(x, z) {
+        for (let i = 0; i < 4; i++) {
+          const pump = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 3.6, 20), steel);
+          pump.position.set(x + (i % 2) * 4.2, 1.8, z + Math.floor(i / 2) * 4.2);
+          pump.castShadow = true;
+          pump.receiveShadow = true;
+          addArena(pump);
+          addCollider(pump, 0.04);
+        }
+        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 16, 18), steel);
+        pipe.rotation.z = Math.PI / 2;
+        pipe.position.set(x + 2, 3.8, z + 2);
+        addArena(pipe);
       }
     }
 
@@ -2228,10 +2877,10 @@
     function addBoundaryWalls() {
       const mat = new THREE.MeshStandardMaterial({ color: 0x39464b, roughness: 0.82 });
       const specs = [
-        [0, 3, -130, 260, 6, 2],
-        [0, 3, 130, 260, 6, 2],
-        [-130, 3, 0, 2, 6, 260],
-        [130, 3, 0, 2, 6, 260],
+        [0, 3, -210, 420, 6, 2],
+        [0, 3, 210, 420, 6, 2],
+        [-210, 3, 0, 2, 6, 420],
+        [210, 3, 0, 2, 6, 420],
       ];
       for (const [x, y, z, w, h, d] of specs) {
         const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -2289,6 +2938,8 @@
       const magazine = box(0.2, 0.46, 0.22, -0.02, -0.28, -0.18, brass);
       magazine.rotation.x = 0.08;
       const rail = box(0.34, 0.035, 0.82, 0, 0.245, -0.18, brass);
+      const railSlots = [];
+      for (let i = 0; i < 6; i++) railSlots.push(box(0.36, 0.018, 0.035, 0, 0.28, -0.48 + i * 0.13, gunmetal));
       const triggerGuard = box(0.2, 0.045, 0.22, 0.01, -0.16, 0.05, gunmetal);
       const ejectionPort = box(0.018, 0.09, 0.22, 0.25, 0.09, -0.22, brass);
       const chargingHandle = box(0.34, 0.035, 0.08, 0, 0.19, 0.26, gunmetal);
@@ -2299,6 +2950,10 @@
       const optic = cylinder(0.105, 0.105, 0.36, 0, 0.34, -0.28, gunmetal);
       const opticGlass = cylinder(0.088, 0.088, 0.014, 0, 0.34, -0.47, glass);
       const sideModule = box(0.08, 0.12, 0.42, 0.25, 0.08, -0.52, polymer);
+      const slingMount = cylinder(0.018, 0.32, -0.23, 0.12, 0.22, brass);
+      slingMount.rotation.y = Math.PI / 2;
+      const foreGrip = box(0.11, 0.42, 0.12, 0, -0.21, -0.76, polymer);
+      foreGrip.rotation.x = -0.12;
       const leftHand = capsule(0.075, 0.26, -0.22, -0.24, -0.55, 0xd0a47c);
       leftHand.rotation.set(0.7, 0.2, -0.7);
       const rightHand = capsule(0.08, 0.28, 0.25, -0.23, -0.1, 0xd0a47c);
@@ -2316,7 +2971,7 @@
       cone.rotation.x = -Math.PI / 2;
       cone.position.copy(flash.position);
 
-      group.add(receiver, upper, handguard, stock, grip, magazine, rail, triggerGuard, ejectionPort, chargingHandle, frontSight, rearSight, barrel, muzzleBrake, optic, opticGlass, sideModule, leftSleeve, rightSleeve, leftHand, rightHand, flash, cone);
+      group.add(receiver, upper, handguard, stock, grip, magazine, rail, ...railSlots, triggerGuard, ejectionPort, chargingHandle, frontSight, rearSight, barrel, muzzleBrake, optic, opticGlass, sideModule, slingMount, foreGrip, leftSleeve, rightSleeve, leftHand, rightHand, flash, cone);
       group.traverse((object) => {
         if (object.isMesh) object.castShadow = true;
       });
@@ -2325,7 +2980,7 @@
         group,
         flash,
         cone,
-        parts: { receiver, upper, handguard, stock, grip, magazine, rail, triggerGuard, ejectionPort, chargingHandle, frontSight, rearSight, barrel, muzzleBrake, optic, opticGlass, sideModule, leftSleeve, rightSleeve, leftHand, rightHand },
+        parts: { receiver, upper, handguard, stock, grip, magazine, rail, railSlots, triggerGuard, ejectionPort, chargingHandle, frontSight, rearSight, barrel, muzzleBrake, optic, opticGlass, sideModule, slingMount, foreGrip, leftSleeve, rightSleeve, leftHand, rightHand },
       };
 
       function box(w, h, d, x, y, z, material) {
@@ -2378,9 +3033,9 @@
       torso.rotation.x = -0.06;
       const chestPlate = box(0.68, 0.5, 0.08, 0, 1.42, -0.26, darkMat);
       const neck = cylinder(0.16, 0.16, 0.16, 0, 1.84, 0, clothMat);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.31, 18, 14), armorMat);
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.5, 0.5), armorMat);
       head.position.y = 2.08;
-      const helmet = box(0.62, 0.22, 0.48, 0, 2.22, 0.02, darkMat);
+      const helmet = box(0.66, 0.18, 0.56, 0, 2.24, 0.02, darkMat);
       const visor = box(0.5, 0.11, 0.035, 0, 2.09, -0.3, visorMat);
 
       const leftArm = limb(-0.62, 1.42, -0.06, 0.13, 0.68, 0.16, clothMat, 0.18);
@@ -2390,6 +3045,10 @@
       const leftBoot = box(0.24, 0.16, 0.42, -0.25, 0.03, -0.08, darkMat);
       const rightBoot = box(0.24, 0.16, 0.42, 0.25, 0.03, -0.08, darkMat);
       const backpack = box(0.58, 0.66, 0.22, 0, 1.35, 0.36, darkMat);
+      const shoulderL = box(0.34, 0.22, 0.34, -0.56, 1.66, -0.02, armorMat);
+      const shoulderR = box(0.34, 0.22, 0.34, 0.56, 1.66, -0.02, armorMat);
+      const kneeL = box(0.24, 0.16, 0.24, -0.25, 0.62, -0.13, armorMat);
+      const kneeR = box(0.24, 0.16, 0.24, 0.25, 0.62, -0.13, armorMat);
 
       const gun = new THREE.Group();
       const gunBody = box(0.18, 0.15, 0.7, 0.42, 1.44, -0.42, darkMat);
@@ -2400,7 +3059,7 @@
       nameLabel.position.set(0, 2.78, 0);
 
       const body = torso;
-      root.add(pelvis, torso, chestPlate, neck, head, helmet, visor, leftArm, rightArm, leftLeg, rightLeg, leftBoot, rightBoot, backpack, gun, nameLabel);
+      root.add(pelvis, torso, chestPlate, neck, head, helmet, visor, leftArm, rightArm, leftLeg, rightLeg, leftBoot, rightBoot, backpack, shoulderL, shoulderR, kneeL, kneeR, gun, nameLabel);
       root.traverse((object) => object.userData.playerId = player.id);
       return { root, body, head, gun, nameLabel, leftArm, rightArm, leftLeg, rightLeg, torso };
 
@@ -2465,14 +3124,15 @@
         ? voters.map((voter) => `${voter.name}: ${voter.vote === 'coop' ? 'Co-Op' : 'Battle'}`).join(' | ')
         : 'No votes yet';
       const remaining = Math.max(0, Math.ceil(((round.endsAt || Date.now()) - Date.now()) / 1000));
+      const mapName = activeMap === 'arcade' ? 'Trigger Ship' : 'Trigger Forest';
       if (round.phase === 'voting') {
-        ui.roundTitle.textContent = `Round Vote - ${remaining}s - ${activeMap === 'arcade' ? 'Afterhours Mall' : 'Hydro Dream'}`;
+        ui.roundTitle.textContent = `Round Vote - ${remaining}s - ${mapName}`;
         ui.roundStatus.textContent = 'Choose mode and map';
       } else if (round.mode === 'coop') {
-        ui.roundTitle.textContent = `Co-Op Wave - ${activeMap === 'arcade' ? 'Afterhours Mall' : 'Hydro Dream'}`;
+        ui.roundTitle.textContent = `Co-Op Wave - ${mapName}`;
         ui.roundStatus.textContent = `Wave ${round.wave} - Zombies ${zombies.size}`;
       } else {
-        ui.roundTitle.textContent = `Battle - ${remaining}s - ${activeMap === 'arcade' ? 'Afterhours Mall' : 'Hydro Dream'}`;
+        ui.roundTitle.textContent = `Battle - ${remaining}s - ${mapName}`;
         ui.roundStatus.textContent = 'Free-for-all';
       }
       if (previousPhase && (previousPhase !== round.phase || previousMode !== round.mode)) resetAmmo();
@@ -2560,7 +3220,7 @@
       const p = weaponModel.parts;
       const sniper = name === 'sniper';
       const shotgun = name === 'shotgun';
-      for (const part of [p.receiver, p.upper, p.handguard, p.stock, p.grip, p.magazine, p.rail, p.triggerGuard, p.ejectionPort, p.chargingHandle, p.frontSight, p.rearSight, p.barrel, p.muzzleBrake, p.optic, p.opticGlass, p.sideModule]) {
+      for (const part of [p.receiver, p.upper, p.handguard, p.stock, p.grip, p.magazine, p.rail, ...p.railSlots, p.triggerGuard, p.ejectionPort, p.chargingHandle, p.frontSight, p.rearSight, p.barrel, p.muzzleBrake, p.optic, p.opticGlass, p.sideModule, p.slingMount, p.foreGrip]) {
         part.visible = true;
       }
       p.leftSleeve.visible = true;
@@ -2760,6 +3420,7 @@
 
     function getFloorHeight(position) {
       let height = 0;
+      const feetY = position.y - localPlayer.eyeHeight;
       for (const surface of terrainSurfaces) {
         if (surface.type === 'bridge') {
           const minX = Math.min(surface.x1, surface.x2);
@@ -2767,7 +3428,7 @@
           const minZ = Math.min(surface.z1, surface.z2);
           const maxZ = Math.max(surface.z1, surface.z2);
           if (position.x >= minX && position.x <= maxX && position.z >= minZ && position.z <= maxZ) {
-            height = Math.max(height, surface.height);
+            if (feetY >= surface.height - 0.72) height = Math.max(height, surface.height);
           }
         } else if (surface.type === 'ramp') {
           const minX = Math.min(surface.x1, surface.x2);
@@ -2776,7 +3437,8 @@
           const maxZ = Math.max(surface.z1, surface.z2);
           if (position.x >= minX && position.x <= maxX && position.z >= minZ && position.z <= maxZ) {
             const t = Math.abs(surface.x2 - surface.x1) < 0.001 ? 0 : THREE.MathUtils.clamp((position.x - surface.x1) / (surface.x2 - surface.x1), 0, 1);
-            height = Math.max(height, THREE.MathUtils.lerp(surface.h1, surface.h2, t));
+            const rampHeight = THREE.MathUtils.lerp(surface.h1, surface.h2, t);
+            if (feetY >= rampHeight - 0.9) height = Math.max(height, rampHeight);
           }
         } else if (surface.type === 'cone') {
           const local = position.clone().sub(surface.mesh.position);
@@ -3000,6 +3662,23 @@
     }
 
     function updateEffects(delta) {
+      for (const water of waterSurfaces) {
+        if (water.userData.baseWater && water.geometry && water.geometry.attributes.position) {
+          const pos = water.geometry.attributes.position;
+          const base = water.userData.baseWater;
+          for (let i = 0; i < pos.count; i++) {
+            const x = base[i * 3];
+            const y = base[i * 3 + 1];
+            pos.array[i * 3 + 2] = Math.sin(worldTime * 2.4 + x * 0.08 + y * 0.22) * 0.12;
+          }
+          pos.needsUpdate = true;
+          water.geometry.computeVertexNormals();
+        }
+        if (water.material && 'opacity' in water.material) {
+          water.material.opacity = water.userData.baseWater ? 0.62 + Math.sin(worldTime * 1.6 + water.position.z) * 0.06 : 0.18 + Math.sin(worldTime * 2.2 + water.position.z) * 0.04;
+        }
+      }
+
       for (let i = grenades.length - 1; i >= 0; i--) {
         const grenade = grenades[i];
         grenade.life -= delta;

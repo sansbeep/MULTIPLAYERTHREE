@@ -26,6 +26,7 @@ const votes = new Map();
 const mapVotes = new Map();
 const zombies = new Map();
 const playerSettings = new Map();
+const DEFAULT_LOBBY = 'public';
 let zombieCounter = 0;
 let currentMap = 'hydro';
 let round = {
@@ -49,25 +50,31 @@ function publicPlayer(player) {
     shooting: player.shooting,
     lastShotAt: player.lastShotAt,
     updatedAt: player.updatedAt,
+    lobby: player.lobby,
   };
 }
 
-function publicRound() {
+function publicRound(lobby = DEFAULT_LOBBY) {
   const counts = { battle: 0, coop: 0 };
   const maps = { hydro: 0, arcade: 0 };
   const voters = [];
-  for (const vote of votes.values()) {
+  for (const [id, vote] of votes) {
+    const player = players.get(id);
+    if (!player || player.lobby !== lobby) continue;
     if (counts[vote] !== undefined) counts[vote] += 1;
   }
   for (const [id, vote] of votes) {
     const player = players.get(id);
+    if (!player || player.lobby !== lobby) continue;
     voters.push({
       id,
       name: player ? player.name : `Player ${id.slice(0, 4)}`,
       vote,
     });
   }
-  for (const vote of mapVotes.values()) {
+  for (const [id, vote] of mapVotes) {
+    const player = players.get(id);
+    if (!player || player.lobby !== lobby) continue;
     if (maps[vote] !== undefined) maps[vote] += 1;
   }
   return {
@@ -80,6 +87,41 @@ function publicRound() {
     maps,
     map: currentMap,
   };
+}
+
+function lobbyRoom(lobby = DEFAULT_LOBBY) {
+  return `lobby:${sanitizeLobby(lobby)}`;
+}
+
+function sanitizeLobby(input) {
+  const clean = String(input || DEFAULT_LOBBY)
+    .replace(/[^\w -]/g, '')
+    .trim()
+    .slice(0, 24);
+  return clean || DEFAULT_LOBBY;
+}
+
+function playersInLobby(lobby = DEFAULT_LOBBY) {
+  return Array.from(players.values()).filter((player) => player.lobby === lobby);
+}
+
+function emitLobbyState(lobby = DEFAULT_LOBBY) {
+  const room = lobbyRoom(lobby);
+  const lobbyPlayers = playersInLobby(lobby);
+  io.to(room).emit('state', lobbyPlayers.map(publicPlayer));
+  io.to(room).emit('playerCount', lobbyPlayers.length);
+  io.to(room).emit('roundState', publicRound(lobby));
+  if (round.mode === 'coop') io.to(room).emit('zombies', Array.from(zombies.values()).map(publicZombie));
+}
+
+function activeLobbies() {
+  const lobbies = new Set(Array.from(players.values()).map((player) => player.lobby || DEFAULT_LOBBY));
+  if (!lobbies.size) lobbies.add(DEFAULT_LOBBY);
+  return lobbies;
+}
+
+function emitAllLobbyStates() {
+  for (const lobby of activeLobbies()) emitLobbyState(lobby);
 }
 
 function publicZombie(zombie) {
@@ -101,6 +143,7 @@ io.on('connection', (socket) => {
   const player = {
     id: socket.id,
     name: `Player ${socket.id.slice(0, 4)}`,
+    lobby: DEFAULT_LOBBY,
     color: randomColor(),
     weapon: 'assault',
     health: 100,
@@ -114,16 +157,18 @@ io.on('connection', (socket) => {
   };
 
   players.set(socket.id, player);
+  socket.join(lobbyRoom(player.lobby));
 
   socket.emit('init', {
     id: socket.id,
-    players: Array.from(players.values()).map(publicPlayer),
-    round: publicRound(),
+    players: playersInLobby(player.lobby).map(publicPlayer),
+    round: publicRound(player.lobby),
     zombies: Array.from(zombies.values()).map(publicZombie),
+    lobby: player.lobby,
   });
 
-  socket.broadcast.emit('playerJoined', publicPlayer(player));
-  io.emit('playerCount', players.size);
+  socket.to(lobbyRoom(player.lobby)).emit('playerJoined', publicPlayer(player));
+  emitLobbyState(player.lobby);
 
   socket.on('playerUpdate', (state = {}) => {
     const current = players.get(socket.id);
@@ -141,8 +186,32 @@ io.on('connection', (socket) => {
     const current = players.get(socket.id);
     if (!current) return;
     current.name = sanitizeName(name, current.name);
-    io.emit('playerRenamed', { id: socket.id, name: current.name });
-    io.emit('roundState', publicRound());
+    io.to(lobbyRoom(current.lobby)).emit('playerRenamed', { id: socket.id, name: current.name });
+    io.to(lobbyRoom(current.lobby)).emit('roundState', publicRound(current.lobby));
+  });
+
+  socket.on('joinLobby', (lobbyName, callback) => {
+    const current = players.get(socket.id);
+    if (!current) return;
+    const previousLobby = current.lobby || DEFAULT_LOBBY;
+    const nextLobby = sanitizeLobby(lobbyName);
+    if (previousLobby !== nextLobby) {
+      socket.leave(lobbyRoom(previousLobby));
+      socket.to(lobbyRoom(previousLobby)).emit('playerLeft', socket.id);
+      current.lobby = nextLobby;
+      socket.join(lobbyRoom(nextLobby));
+      emitLobbyState(previousLobby);
+    }
+    socket.emit('init', {
+      id: socket.id,
+      players: playersInLobby(nextLobby).map(publicPlayer),
+      round: publicRound(nextLobby),
+      zombies: Array.from(zombies.values()).map(publicZombie),
+      lobby: nextLobby,
+    });
+    socket.to(lobbyRoom(nextLobby)).emit('playerJoined', publicPlayer(current));
+    emitLobbyState(nextLobby);
+    if (typeof callback === 'function') callback({ lobby: nextLobby, players: playersInLobby(nextLobby).length });
   });
 
   socket.on('pingCheck', (_sent, callback) => {
@@ -157,7 +226,7 @@ io.on('connection', (socket) => {
     current.shooting = true;
     current.lastShotAt = Date.now();
 
-    socket.broadcast.emit('remoteShot', {
+    socket.to(lobbyRoom(current.lobby)).emit('remoteShot', {
       id: socket.id,
       weapon: current.weapon,
       origin: sanitizeVector(shot.origin, current.position),
@@ -171,7 +240,7 @@ io.on('connection', (socket) => {
   socket.on('grenade', (grenade = {}) => {
     const current = players.get(socket.id);
     if (!current) return;
-    socket.broadcast.emit('grenade', {
+    socket.to(lobbyRoom(current.lobby)).emit('grenade', {
       id: `${socket.id}-${Date.now()}`,
       ownerId: socket.id,
       origin: sanitizeVector(grenade.origin, current.position),
@@ -183,15 +252,17 @@ io.on('connection', (socket) => {
   socket.on('voteMode', (mode) => {
     if (mode !== 'battle' && mode !== 'coop') return;
     votes.set(socket.id, mode);
-    io.emit('roundState', publicRound());
+    const current = players.get(socket.id);
+    io.to(lobbyRoom(current && current.lobby)).emit('roundState', publicRound(current && current.lobby));
   });
 
   socket.on('voteMap', (mapName) => {
     if (mapName !== 'hydro' && mapName !== 'arcade') return;
     mapVotes.set(socket.id, mapName);
     currentMap = getWinningMap();
-    io.emit('roundState', publicRound());
-    io.emit('mapState', currentMap);
+    const current = players.get(socket.id);
+    io.to(lobbyRoom(current && current.lobby)).emit('roundState', publicRound(current && current.lobby));
+    io.to(lobbyRoom(current && current.lobby)).emit('mapState', currentMap);
   });
 
   socket.on('hit', ({ targetId, damage, weapon, headshot } = {}) => {
@@ -213,7 +284,7 @@ io.on('connection', (socket) => {
         y: 2,
         z: (Math.random() - 0.5) * 70,
       };
-      io.emit('playerRespawned', {
+      io.to(lobbyRoom(attacker.lobby)).emit('playerRespawned', {
         id: targetId,
         by: socket.id,
         weapon,
@@ -223,7 +294,7 @@ io.on('connection', (socket) => {
         victimName: target.name,
         headshot,
       });
-      io.emit('killFeed', {
+      io.to(lobbyRoom(attacker.lobby)).emit('killFeed', {
         killerId: socket.id,
         victimId: targetId,
         killerName: attacker.name,
@@ -233,7 +304,7 @@ io.on('connection', (socket) => {
       });
     }
 
-    io.emit('healthUpdate', {
+    io.to(lobbyRoom(attacker.lobby)).emit('healthUpdate', {
       id: targetId,
       health: target.health,
       attackerId: socket.id,
@@ -251,8 +322,8 @@ io.on('connection', (socket) => {
     if (zombie.health <= 0) {
       zombies.delete(zombieId);
       attacker.score += 1;
-      io.emit('zombieKilled', { id: zombieId, by: socket.id, score: attacker.score });
-      io.emit('killFeed', {
+      io.to(lobbyRoom(attacker.lobby)).emit('zombieKilled', { id: zombieId, by: socket.id, score: attacker.score });
+      io.to(lobbyRoom(attacker.lobby)).emit('killFeed', {
         killerId: socket.id,
         victimId: zombieId,
         killerName: attacker.name,
@@ -263,20 +334,20 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    const current = players.get(socket.id);
+    const lobby = current ? current.lobby : DEFAULT_LOBBY;
     players.delete(socket.id);
     votes.delete(socket.id);
     mapVotes.delete(socket.id);
-    io.emit('playerLeft', socket.id);
-    io.emit('playerCount', players.size);
-    io.emit('roundState', publicRound());
+    io.to(lobbyRoom(lobby)).emit('playerLeft', socket.id);
+    emitLobbyState(lobby);
   });
 });
 
 setInterval(() => {
   updateRound();
   updateZombies(1 / TICK_RATE);
-  io.emit('state', Array.from(players.values()).map(publicPlayer));
-  if (round.mode === 'coop') io.emit('zombies', Array.from(zombies.values()).map(publicZombie));
+  emitAllLobbyStates();
 }, 1000 / TICK_RATE);
 
 function updateRound() {
@@ -321,8 +392,8 @@ function startVoting() {
     endsAt: Date.now() + VOTE_SECONDS * 1000,
     wave: 0,
   };
-  io.emit('roundState', publicRound());
-  io.emit('zombies', []);
+  emitAllLobbyStates();
+  for (const lobby of activeLobbies()) io.to(lobbyRoom(lobby)).emit('zombies', []);
 }
 
 function startRound(mode) {
@@ -335,8 +406,8 @@ function startRound(mode) {
     endsAt: Date.now() + BATTLE_SECONDS * 1000,
     wave: 0,
   };
-  io.emit('roundState', publicRound());
-  io.emit('mapState', currentMap);
+  emitAllLobbyStates();
+  for (const lobby of activeLobbies()) io.to(lobbyRoom(lobby)).emit('mapState', currentMap);
   if (mode === 'coop') spawnWave();
 }
 
@@ -380,7 +451,7 @@ function spawnWave() {
     };
     zombies.set(zombie.id, zombie);
   }
-  io.emit('roundState', publicRound());
+  emitAllLobbyStates();
 }
 
 function updateZombies(delta) {
@@ -420,7 +491,7 @@ function updateZombies(delta) {
           y: 2,
           z: (Math.random() - 0.5) * 40,
         };
-        io.emit('playerRespawned', {
+        io.to(lobbyRoom(nearest.lobby)).emit('playerRespawned', {
           id: nearest.id,
           by: 'zombie',
           weapon: 'claws',
@@ -429,7 +500,7 @@ function updateZombies(delta) {
           killerName: 'Zombie',
           victimName: nearest.name,
         });
-        io.emit('killFeed', {
+        io.to(lobbyRoom(nearest.lobby)).emit('killFeed', {
           killerId: 'zombie',
           victimId: nearest.id,
           killerName: 'Zombie',
@@ -437,7 +508,7 @@ function updateZombies(delta) {
           weapon: 'claws',
         });
       }
-      io.emit('healthUpdate', {
+      io.to(lobbyRoom(nearest.lobby)).emit('healthUpdate', {
         id: nearest.id,
         health: nearest.health,
         attackerId: 'zombie',
