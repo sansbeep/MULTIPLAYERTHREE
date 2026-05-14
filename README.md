@@ -141,3 +141,16 @@ npm start
 - Hid the first-person gun during scoped aim so the weapon no longer blocks the sight picture.
 - Made Trigger Forest much denser with more blocky trees and rocks while respecting low-detail mode.
 - Reduced multiplayer bandwidth with lower movement update rates, volatile state packets, and less frequent full round broadcasts.
+
+### v1.7 - Inventory, Shipwreck, and Smoother Multiplayer
+- Fixed login flow so account login no longer depends on joining a hidden lobby name.
+- Removed the old Forest Party and Ship Crew preset lobby choices from the title screen.
+- Moved inventory into its own window with a rotatable 3D humanoid inspector.
+- Added character cosmetics: block crown, tiny horns, and voxel cape.
+- Added friend lobby invites that can pull invited friends from other active lobbies or matches.
+- Simplified lobby portal cards and removed decorative portal icons that interfered with buttons.
+- Added camera kick when firing weapons.
+- Added orange ammo regen pickups alongside blue health regen pickups.
+- Reworked Trigger Ship into Trigger Shipwreck with broken decks, rubble, lower galley floors, torn sails, deadly water, and more cover.
+- Added climbable ladders to Trigger Forest watchtowers.
+- Improved perceived multiplayer smoothness with faster client sends, volatile movement packets, and stronger interpolation.

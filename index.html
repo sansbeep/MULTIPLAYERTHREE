@@ -758,35 +758,33 @@
       font-size: 13px;
     }
 
+    #inventoryOverlay #inventoryPanel {
+      width: min(720px, calc(100vw - 32px));
+      max-height: min(780px, calc(100vh - 36px));
+      overflow-y: auto;
+      margin: 0;
+      padding: 18px;
+      border: 2px solid rgba(129, 234, 255, 0.34);
+      background: rgba(8, 12, 22, 0.94);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.48);
+    }
+
     #characterPreview {
       position: relative;
-      height: 118px;
+      height: 260px;
       border: 1px solid rgba(129, 234, 255, 0.18);
       background:
         radial-gradient(circle at 50% 20%, rgba(129, 234, 255, 0.12), transparent 34%),
         rgba(0, 0, 0, 0.16);
       overflow: hidden;
+      cursor: grab;
     }
 
-    #characterPreview span {
-      position: absolute;
+    #characterPreview canvas {
+      width: 100%;
+      height: 100%;
       display: block;
-      border: 2px solid rgba(0, 0, 0, 0.28);
-      background: var(--preview-color, #59c3ff);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
     }
-
-    #characterPreview .previewHead { width: 34px; height: 30px; left: calc(50% - 17px); top: 12px; }
-    #characterPreview .previewBody { width: 48px; height: 48px; left: calc(50% - 24px); top: 45px; }
-    #characterPreview .previewArm { width: 14px; height: 46px; top: 48px; background: #1b2028; }
-    #characterPreview .previewArm.left { left: calc(50% - 46px); transform: rotate(8deg); }
-    #characterPreview .previewArm.right { left: calc(50% + 32px); transform: rotate(-8deg); }
-    #characterPreview .previewLeg { width: 18px; height: 36px; top: 88px; background: #161a21; }
-    #characterPreview .previewLeg.left { left: calc(50% - 22px); }
-    #characterPreview .previewLeg.right { left: calc(50% + 4px); }
-
-    #characterPreview.scout .previewBody { width: 40px; left: calc(50% - 20px); }
-    #characterPreview.heavy .previewBody { width: 58px; left: calc(50% - 29px); }
 
     #inventoryPanel strong {
       color: #bffff0;
@@ -1053,7 +1051,7 @@
     }
 
     .lobbyEntry.portal::before {
-      content: "";
+      content: none;
       position: absolute;
       right: 12px;
       top: 12px;
@@ -1452,6 +1450,34 @@
       cursor: pointer;
     }
 
+    #inventoryOpenButton {
+      width: 100%;
+      min-height: 40px;
+      margin: 8px 0;
+      border: 1px solid rgba(129, 234, 255, 0.28);
+      background: rgba(129, 234, 255, 0.08);
+      color: #eef8ff;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    #inventoryOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(2, 4, 8, 0.72);
+      z-index: 7;
+      pointer-events: auto;
+    }
+
+    #inventoryOverlay.active {
+      display: grid;
+    }
+
     #saveAccountRow,
     #accountStatus {
       grid-column: 1 / -1;
@@ -1647,7 +1673,7 @@
       </div>
       <div id="mapVoteButtons">
         <button data-map="hydro">Trigger Forest</button>
-        <button data-map="arcade">Trigger Ship</button>
+        <button data-map="arcade">Trigger Shipwreck</button>
         <button data-map="citadel">Trigger Dungeon</button>
       </div>
     </div>
@@ -1664,7 +1690,7 @@
         <input id="usernameInput" maxlength="18" placeholder="Username">
         <div class="mapPick">
           <button class="mapButton active" data-map="hydro" type="button">Trigger Forest<small>Dense block woods, rocks, mine cover.</small></button>
-          <button class="mapButton" data-map="arcade" type="button">Trigger Ship<small>Blocky cargo ship over deep water.</small></button>
+          <button class="mapButton" data-map="arcade" type="button">Trigger Shipwreck<small>Broken galley wreck over deadly water.</small></button>
           <button class="mapButton" data-map="citadel" type="button">Trigger Dungeon<small>Underground torchlit maze with no escape.</small></button>
         </div>
         <div id="lobbyMenu">
@@ -1686,17 +1712,14 @@
           <span>Profile: <strong id="profileName">Guest</strong></span>
           <span>Credits: <strong id="profileCredits">0</strong></span>
         </div>
+        <button id="inventoryOpenButton" type="button">Open Inventory</button>
+        <div id="inventoryOverlay">
         <div id="inventoryPanel">
+          <button id="inventoryCloseButton" type="button">Close Inventory</button>
           <strong>Inventory</strong>
-          <div id="characterPreview" aria-label="Character preview">
-            <span class="previewHead"></span>
-            <span class="previewBody"></span>
-            <span class="previewArm left"></span>
-            <span class="previewArm right"></span>
-            <span class="previewLeg left"></span>
-            <span class="previewLeg right"></span>
-          </div>
+          <div id="characterPreview" aria-label="3D character preview"></div>
           <div id="ownedWeaponsList">Assault Rifle</div>
+        </div>
         </div>
         <div id="customizePanel">
           <strong>Character</strong>
@@ -1707,6 +1730,14 @@
                 <option value="classic">Classic</option>
                 <option value="scout">Scout</option>
                 <option value="heavy">Heavy</option>
+              </select>
+            </label>
+            <label>Cosmetic
+              <select id="characterCosmetic">
+                <option value="none">None</option>
+                <option value="crown">Block Crown</option>
+                <option value="horns">Tiny Horns</option>
+                <option value="cape">Voxel Cape</option>
               </select>
             </label>
             <button id="saveCustomizationButton" type="button">Apply</button>
@@ -1761,7 +1792,7 @@
         <span class="optic"></span>
       </div>
       <h1>TRIGGER BLOXXY</h1>
-      <p>Blocky arenas, detailed guns, private lobbies. Choose a lobby, squad up, then vote your way into the forest or the ship.</p>
+      <p>Blocky arenas, detailed guns, private lobbies. Log in first, then create a lobby, join a lobby, or jump into Mega Portal.</p>
       <div id="titleMenu">
         <input id="introUsernameInput" maxlength="18" placeholder="Username">
         <input id="introPasswordInput" maxlength="32" type="password" placeholder="Password">
@@ -1772,12 +1803,6 @@
         <div id="accountStatus"></div>
         <div id="savedAccounts"></div>
         <div id="allAccountsPanel"></div>
-        <input id="lobbyInput" maxlength="24" value="public" placeholder="Lobby name">
-        <div id="lobbyPresets">
-          <button type="button" data-lobby="public">Public</button>
-          <button type="button" data-lobby="forest-party">Forest Party</button>
-          <button type="button" data-lobby="ship-crew">Ship Crew</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1830,6 +1855,7 @@
     const grenades = [];
     const explosions = [];
     const colliders = [];
+    const climbZones = [];
     const terrainSurfaces = [];
     const waterSurfaces = [];
     const interactiveProps = [];
@@ -1867,6 +1893,7 @@
       color: '#59c3ff',
       shooting: false,
       lastNetworkShotAt: 0,
+      cameraKick: 0,
     };
 
     const weapons = {
@@ -1991,7 +2018,7 @@
       sniper: 'Best scope and highest damage.',
       launcher: 'Arc explosive shells into cover.',
     };
-    const profile = { username: '', credits: 0, owned: ['assault'], ownedSkins: ['default'], activeSkin: 'default', characterColor: '#59c3ff', characterStyle: 'classic' };
+    const profile = { username: '', credits: 0, owned: ['assault'], ownedSkins: ['default'], activeSkin: 'default', characterColor: '#59c3ff', characterStyle: 'classic', characterCosmetic: 'none' };
     let currentLobbyState = null;
     let gameStarted = false;
 
@@ -2044,9 +2071,13 @@
       profileName: document.getElementById('profileName'),
       profileCredits: document.getElementById('profileCredits'),
       ownedWeaponsList: document.getElementById('ownedWeaponsList'),
+      inventoryOpenButton: document.getElementById('inventoryOpenButton'),
+      inventoryCloseButton: document.getElementById('inventoryCloseButton'),
+      inventoryOverlay: document.getElementById('inventoryOverlay'),
       characterPreview: document.getElementById('characterPreview'),
       characterColor: document.getElementById('characterColor'),
       characterStyle: document.getElementById('characterStyle'),
+      characterCosmetic: document.getElementById('characterCosmetic'),
       saveCustomizationButton: document.getElementById('saveCustomizationButton'),
       skinButtons: document.getElementById('skinButtons'),
       menuShopButtons: Array.from(document.querySelectorAll('#menuShop .shopCard')),
@@ -2072,8 +2103,6 @@
       saveAccountToggle: document.getElementById('saveAccountToggle'),
       accountStatus: document.getElementById('accountStatus'),
       savedAccounts: document.getElementById('savedAccounts'),
-      lobbyInput: document.getElementById('lobbyInput'),
-      lobbyPresets: Array.from(document.querySelectorAll('#lobbyPresets button')),
       scope: document.getElementById('scope'),
       crosshair: document.getElementById('crosshair'),
       slots: Array.from(document.querySelectorAll('.slot')),
@@ -2103,6 +2132,13 @@
       lastFpsAt: performance.now(),
     };
     let selectedLobby = 'public';
+    let previewRenderer = null;
+    let previewScene = null;
+    let previewCamera = null;
+    let previewRig = null;
+    let previewYaw = 0.35;
+    let previewDragging = false;
+    let previewLastX = 0;
 
     function refreshPerformanceDisplay() {
       ui.perfFps.textContent = Math.max(0, Math.round(performanceStats.fps));
@@ -2351,13 +2387,14 @@
       loadProfile(name);
       ui.usernameInput.value = name;
       socket.emit('setName', name);
-      selectedLobby = sanitizeLobbyName(ui.lobbyInput.value);
-      socket.emit('joinLobby', selectedLobby, () => {
-        ui.introOverlay.style.display = 'none';
-        ui.loginOverlay.style.display = 'grid';
-        ui.notice.style.display = 'none';
-        socket.emit('listLobbies', renderLobbyList);
-      });
+      selectedLobby = 'public';
+      ui.introOverlay.style.display = 'none';
+      ui.loginOverlay.style.display = 'grid';
+      ui.notice.style.display = 'none';
+      ui.accountStatus.textContent = `Logged in as ${name}.`;
+      socket.emit('listLobbies', renderLobbyList);
+      initCharacterPreview();
+      updateCharacterPreview();
     }
 
     function loadProfile(name) {
@@ -2368,6 +2405,7 @@
       profile.activeSkin = 'default';
       profile.characterColor = '#59c3ff';
       profile.characterStyle = 'classic';
+      profile.characterCosmetic = 'none';
       try {
         const stored = JSON.parse(window.localStorage.getItem(profileKey()) || '{}');
         if (Number.isFinite(stored.credits)) profile.credits = Math.max(0, stored.credits);
@@ -2376,6 +2414,7 @@
         if (stored.activeSkin && weaponSkins[stored.activeSkin]) profile.activeSkin = stored.activeSkin;
         if (typeof stored.characterColor === 'string' && /^#[0-9a-f]{6}$/i.test(stored.characterColor)) profile.characterColor = stored.characterColor;
         if (['classic', 'scout', 'heavy'].includes(stored.characterStyle)) profile.characterStyle = stored.characterStyle;
+        if (['none', 'crown', 'horns', 'cape'].includes(stored.characterCosmetic)) profile.characterCosmetic = stored.characterCosmetic;
       } catch (error) {
         profile.owned = ['assault'];
       }
@@ -2394,6 +2433,7 @@
         activeSkin: profile.activeSkin,
         characterColor: profile.characterColor,
         characterStyle: profile.characterStyle,
+        characterCosmetic: profile.characterCosmetic,
       }));
       updateProfileUi();
     }
@@ -2448,10 +2488,12 @@
     function applyCustomization() {
       profile.characterColor = ui.characterColor.value;
       profile.characterStyle = ui.characterStyle.value;
+      profile.characterCosmetic = ui.characterCosmetic.value;
       localPlayer.color = profile.characterColor;
       saveProfile();
-      socket.emit('setCustomization', { color: profile.characterColor, style: profile.characterStyle });
+      socket.emit('setCustomization', { color: profile.characterColor, style: profile.characterStyle, cosmetic: profile.characterCosmetic });
       tintLocalWeapon();
+      updateCharacterPreview();
     }
 
     function updateProfileUi() {
@@ -2459,10 +2501,8 @@
       if (ui.profileCredits) ui.profileCredits.textContent = profile.credits;
       if (ui.characterColor) ui.characterColor.value = profile.characterColor;
       if (ui.characterStyle) ui.characterStyle.value = profile.characterStyle;
-      if (ui.characterPreview) {
-        ui.characterPreview.style.setProperty('--preview-color', profile.characterColor);
-        ui.characterPreview.className = profile.characterStyle;
-      }
+      if (ui.characterCosmetic) ui.characterCosmetic.value = profile.characterCosmetic;
+      updateCharacterPreview();
       if (ui.ownedWeaponsList) {
         ui.ownedWeaponsList.innerHTML = '';
         for (const name of profile.owned) {
@@ -2504,6 +2544,87 @@
         slot.classList.toggle('locked', owned && !isWeaponAllowed(slot.dataset.weapon));
       });
       updateProfileUi();
+    }
+
+    function initCharacterPreview() {
+      if (!ui.characterPreview || previewRenderer) return;
+      previewScene = new THREE.Scene();
+      previewScene.background = new THREE.Color(0x080c14);
+      previewCamera = new THREE.PerspectiveCamera(38, 1, 0.1, 50);
+      previewCamera.position.set(0, 1.45, 6.3);
+      previewCamera.lookAt(0, 1.25, 0);
+      previewRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      previewRenderer.setSize(ui.characterPreview.clientWidth, ui.characterPreview.clientHeight);
+      ui.characterPreview.innerHTML = '';
+      ui.characterPreview.appendChild(previewRenderer.domElement);
+      previewScene.add(new THREE.HemisphereLight(0xd9ecff, 0x20262d, 2.4));
+      const key = new THREE.DirectionalLight(0xffe0a8, 2.2);
+      key.position.set(3, 5, 4);
+      previewScene.add(key);
+      ui.characterPreview.addEventListener('pointerdown', (event) => {
+        previewDragging = true;
+        previewLastX = event.clientX;
+        ui.characterPreview.setPointerCapture(event.pointerId);
+      });
+      ui.characterPreview.addEventListener('pointermove', (event) => {
+        if (!previewDragging) return;
+        previewYaw += (event.clientX - previewLastX) * 0.012;
+        previewLastX = event.clientX;
+        renderCharacterPreview();
+      });
+      ui.characterPreview.addEventListener('pointerup', () => previewDragging = false);
+    }
+
+    function updateCharacterPreview() {
+      if (!previewScene || !previewRenderer) return;
+      if (previewRig) {
+        previewScene.remove(previewRig);
+        previewRig.traverse((object) => {
+          if (object.geometry) object.geometry.dispose();
+          if (object.material) object.material.dispose();
+        });
+      }
+      previewRig = createPreviewHumanoid(profile.characterColor, profile.characterStyle, profile.characterCosmetic);
+      previewScene.add(previewRig);
+      renderCharacterPreview();
+    }
+
+    function renderCharacterPreview() {
+      if (!previewRenderer || !previewScene || !previewCamera || !previewRig) return;
+      previewRenderer.setSize(ui.characterPreview.clientWidth, ui.characterPreview.clientHeight, false);
+      previewCamera.aspect = ui.characterPreview.clientWidth / Math.max(1, ui.characterPreview.clientHeight);
+      previewCamera.updateProjectionMatrix();
+      previewRig.rotation.y = previewYaw;
+      previewRenderer.render(previewScene, previewCamera);
+    }
+
+    function createPreviewHumanoid(color, style, cosmetic) {
+      const root = new THREE.Group();
+      const armor = new THREE.MeshStandardMaterial({ color: new THREE.Color(color || '#59c3ff'), roughness: 0.58, metalness: 0.12 });
+      const dark = new THREE.MeshStandardMaterial({ color: 0x171b22, roughness: 0.8 });
+      const gold = new THREE.MeshStandardMaterial({ color: 0xffcf68, roughness: 0.48, metalness: 0.15 });
+      const bodyScale = style === 'heavy' ? [1.25, 1.08, 1.18] : style === 'scout' ? [0.78, 1.08, 0.82] : [1, 1, 1];
+      const body = box(0.86, 1, 0.46, 0, 1.22, 0, armor);
+      body.scale.set(...bodyScale);
+      const head = box(0.55, 0.48, 0.5, 0, 2.02, 0, armor);
+      const visor = box(0.42, 0.09, 0.04, 0, 2.04, -0.28, dark);
+      const pelvis = box(0.72, 0.28, 0.42, 0, 0.62, 0, dark);
+      const armOffset = style === 'heavy' ? 0.7 : style === 'scout' ? 0.5 : 0.6;
+      root.add(body, head, visor, pelvis);
+      root.add(box(0.18, 0.78, 0.18, -armOffset, 1.22, 0, dark), box(0.18, 0.78, 0.18, armOffset, 1.22, 0, dark));
+      root.add(box(0.22, 0.86, 0.22, -0.24, 0.1, 0, dark), box(0.22, 0.86, 0.22, 0.24, 0.1, 0, dark));
+      if (cosmetic === 'crown') root.add(box(0.72, 0.16, 0.62, 0, 2.34, 0, gold), box(0.14, 0.22, 0.14, -0.24, 2.52, -0.18, gold), box(0.14, 0.22, 0.14, 0.24, 2.52, -0.18, gold));
+      if (cosmetic === 'horns') root.add(box(0.16, 0.22, 0.16, -0.28, 2.34, -0.1, gold), box(0.16, 0.22, 0.16, 0.28, 2.34, -0.1, gold));
+      if (cosmetic === 'cape') root.add(box(0.82, 1.05, 0.08, 0, 1.28, 0.34, new THREE.MeshStandardMaterial({ color: 0x7d2636, roughness: 0.72 })));
+      root.position.y = 0.35;
+      return root;
+
+      function box(w, h, d, x, y, z, material) {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+        mesh.position.set(x, y, z);
+        return mesh;
+      }
     }
 
     function renderLobbyList(lobbies = []) {
@@ -2550,6 +2671,10 @@
             });
           } else {
             socket.emit('joinLobby', lobby.id, (lobbyState) => {
+              if (lobbyState && lobbyState.error) {
+                ui.lobbyStatus.textContent = lobbyState.error;
+                return;
+              }
               renderLobbyMembers(lobbyState);
               ui.lobbyStatus.textContent = `Joined ${lobbyState.name}. Waiting for host to start.`;
             });
@@ -2644,17 +2769,8 @@
     ui.createAccountButton.addEventListener('click', createAccount);
     ui.showAccountsButton.addEventListener('click', () => renderAllAccounts(true));
 
-    ui.lobbyInput.addEventListener('keydown', (event) => {
-      if (event.code === 'Enter') loginAccount();
-    });
     ui.introPasswordInput.addEventListener('keydown', (event) => {
       if (event.code === 'Enter') loginAccount();
-    });
-
-    ui.lobbyPresets.forEach((button) => {
-      button.addEventListener('click', () => {
-        ui.lobbyInput.value = button.dataset.lobby;
-      });
     });
 
     ui.settingsClose.addEventListener('click', () => {
@@ -2744,11 +2860,12 @@
       const rig = playerMeshes.get(id);
       if (rig) updateNameLabel(rig, name);
     });
-    socket.on('playerCustomized', ({ id, color, style }) => {
+    socket.on('playerCustomized', ({ id, color, style, cosmetic }) => {
       const target = playerTargets.get(id);
       if (target) {
         target.color = color || target.color;
         target.style = style || target.style;
+        target.cosmetic = cosmetic || target.cosmetic;
       }
       if (id === localPlayer.id) {
         localPlayer.color = color || localPlayer.color;
@@ -2756,7 +2873,7 @@
         return;
       }
       removeRemotePlayer(id);
-      const updated = target || { id, color, style, name: playerNames.get(id), position: { x: 0, y: 2, z: 0 }, rotation: { y: 0 }, velocity: { x: 0, y: 0, z: 0 } };
+      const updated = target || { id, color, style, cosmetic, name: playerNames.get(id), position: { x: 0, y: 2, z: 0 }, rotation: { y: 0 }, velocity: { x: 0, y: 0, z: 0 } };
       addOrUpdateRemotePlayer(updated);
     });
     socket.on('playerCount', (count) => ui.playersOnline.textContent = count);
@@ -2807,7 +2924,13 @@
       join.type = 'button';
       join.textContent = 'Join';
       join.addEventListener('click', () => {
-        socket.emit('joinLobby', lobby, renderLobbyMembers);
+        socket.emit('joinLobby', lobby, (lobbyState) => {
+          if (lobbyState && lobbyState.error) {
+            addFriendMessage(lobbyState.error);
+            return;
+          }
+          renderLobbyMembers(lobbyState);
+        });
         gameStarted = false;
         ui.loginOverlay.style.display = 'grid';
         ui.notice.style.display = 'none';
@@ -2944,7 +3067,22 @@
       profile.characterColor = ui.characterColor.value;
       localPlayer.color = profile.characterColor;
       tintLocalWeapon();
+      updateCharacterPreview();
     });
+    ui.characterStyle.addEventListener('change', () => {
+      profile.characterStyle = ui.characterStyle.value;
+      updateCharacterPreview();
+    });
+    ui.characterCosmetic.addEventListener('change', () => {
+      profile.characterCosmetic = ui.characterCosmetic.value;
+      updateCharacterPreview();
+    });
+    ui.inventoryOpenButton.addEventListener('click', () => {
+      ui.inventoryOverlay.classList.add('active');
+      initCharacterPreview();
+      updateCharacterPreview();
+    });
+    ui.inventoryCloseButton.addEventListener('click', () => ui.inventoryOverlay.classList.remove('active'));
     ui.chatInput.addEventListener('focus', () => {
       localPlayer.shooting = false;
       weaponState.zooming = false;
@@ -3133,6 +3271,7 @@
         });
       }
       colliders.length = 0;
+      climbZones.length = 0;
       terrainSurfaces.length = 0;
       waterSurfaces.length = 0;
       interactiveProps.length = 0;
@@ -3228,6 +3367,7 @@
       for (const [x, z] of [[-148, 94], [150, 72], [-128, -128], [132, -144], [6, 150]]) addWatchtower(x, z);
 
       for (const [x, z] of [[-42, -36], [58, -22], [-76, 62], [90, 72], [18, 118], [-118, -86]]) addHealthPickup(x, z);
+      for (const [x, z] of [[-24, 42], [72, -74], [-126, 24], [128, 118], [0, -118]]) addAmmoPickup(x, z);
 
       function addBlockTree(x, z, h, leafMat) {
         const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.4, h, 1.4), trunkMat);
@@ -3310,6 +3450,15 @@
         addArena(tower);
         for (const child of tower.children) addCollider(child, 0.03, { standable: child === platform });
         terrainSurfaces.push({ type: 'bridge', x1: x - 4.5, x2: x + 4.5, z1: z - 4.5, z2: z + 4.5, height: 12.25 });
+        const ladder = new THREE.Mesh(new THREE.BoxGeometry(0.6, 11.5, 0.28), trunkMat);
+        ladder.position.set(x + 4.85, 5.8, z);
+        addArena(ladder);
+        for (let i = 0; i < 7; i++) {
+          const rung = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.16, 0.22), trunkMat);
+          rung.position.set(x + 4.85, 1.1 + i * 1.45, z - 0.18);
+          addArena(rung);
+        }
+        climbZones.push({ x: x + 4.85, z, radius: 1.45, top: 12.4 });
       }
 
       function addForestParticles() {
@@ -3384,6 +3533,37 @@
         addArena(shelter);
         addCollider(shelter, 0.04);
       }
+      for (const [x, z, w, d, rot] of [[-42, 8, 34, 12, 0.12], [-8, -18, 28, 10, -0.22], [52, 4, 30, 14, 0.28], [104, -12, 18, 16, -0.4]]) {
+        const broken = new THREE.Mesh(new THREE.BoxGeometry(w, 0.8, d), deckMat);
+        broken.position.set(x, 4.7 + rand() * 0.7, z);
+        broken.rotation.set(0.08 + rand() * 0.14, rot, (rand() - 0.5) * 0.16);
+        addArena(broken);
+        addCollider(broken, 0.03, { standable: true });
+      }
+      for (const [x, z, h] of [[-64, -26, 5], [-36, 28, 4], [18, 28, 6], [64, -24, 4.6], [110, 18, 5.8]]) {
+        const rubble = new THREE.Group();
+        for (let i = 0; i < 7; i++) {
+          const chunk = new THREE.Mesh(new THREE.BoxGeometry(1.4 + rand() * 3.2, 0.6 + rand() * h, 1.2 + rand() * 3.2), i % 2 ? hullMat : deckMat);
+          chunk.position.set((rand() - 0.5) * 7, chunk.geometry.parameters.height / 2 + 2.9, (rand() - 0.5) * 7);
+          chunk.rotation.y = rand() * Math.PI;
+          rubble.add(chunk);
+        }
+        rubble.position.set(x, 0, z);
+        addArena(rubble);
+        rubble.children.forEach((chunk) => addCollider(chunk, 0.025));
+      }
+      for (const [x, z, w] of [[-34, 0, 54], [58, 0, 46]]) {
+        const lower = new THREE.Mesh(new THREE.BoxGeometry(w, 0.7, 44), deckMat);
+        lower.position.set(x, -1.3, z);
+        addArena(lower);
+        terrainSurfaces.push({ type: 'bridge', x1: x - w / 2, x2: x + w / 2, z1: -22, z2: 22, height: -0.85 });
+      }
+      for (const [x, z] of [[-18, -30], [30, 30]]) {
+        const tornSail = new THREE.Mesh(new THREE.PlaneGeometry(26, 14), sailMat.clone());
+        tornSail.position.set(x, 11, z);
+        tornSail.rotation.set(0.2, Math.PI / 2, 0.18);
+        addArena(tornSail);
+      }
       for (const z of [-33, 33]) {
         const rail = new THREE.Mesh(new THREE.BoxGeometry(232, 0.35, 0.45), railMat);
         rail.position.set(0, 4.2, z);
@@ -3397,6 +3577,7 @@
       }
       addSeaFoam();
       for (const [x, z] of [[-86, 18], [-28, -18], [38, 22], [88, -18]]) addHealthPickup(x, z);
+      for (const [x, z] of [[-104, -12], [-48, 26], [18, -24], [76, 10]]) addAmmoPickup(x, z);
 
       function createOpenWater(w, d, material) {
         const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d, 80, 80), material);
@@ -3477,6 +3658,7 @@
       }
 
       for (const [x, z] of [[-42, -78], [44, -78], [-74, 48], [74, 44], [0, 0], [0, 84]]) addHealthPickup(x, z);
+      for (const [x, z] of [[-28, 26], [36, 28], [-86, -18], [88, -42]]) addAmmoPickup(x, z);
     }
 
     function addHydroWarehouse() {
@@ -4141,7 +4323,20 @@
       const pickup = new THREE.Group();
       const base = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.14, 18), texturedMaterial(0x232a31, 0.5, 0.4, 'metal'));
       const core = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.52, 0.52), new THREE.MeshStandardMaterial({ color: 0x3dd6aa, emissive: 0x155544, emissiveIntensity: 0.7, roughness: 0.38 }));
+      pickup.userData.pickupType = 'health';
       core.position.y = 0.42;
+      pickup.add(base, core);
+      pickup.position.set(x, 0.15, z);
+      addArena(pickup);
+      interactiveProps.push(pickup);
+    }
+
+    function addAmmoPickup(x, z) {
+      const pickup = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.14, 18), texturedMaterial(0x232a31, 0.5, 0.4, 'metal'));
+      const core = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.56, 0.56), new THREE.MeshStandardMaterial({ color: 0xff9b36, emissive: 0x6d300c, emissiveIntensity: 0.75, roughness: 0.36 }));
+      core.position.y = 0.42;
+      pickup.userData.pickupType = 'ammo';
       pickup.add(base, core);
       pickup.position.set(x, 0.15, z);
       addArena(pickup);
@@ -4298,6 +4493,7 @@
       const root = new THREE.Group();
       const color = new THREE.Color(player.color || '#59c3ff');
       const style = player.style || 'classic';
+      const cosmetic = player.cosmetic || 'none';
       const armorMat = new THREE.MeshStandardMaterial({ color, roughness: 0.58, metalness: 0.18 });
       const clothMat = new THREE.MeshStandardMaterial({ color: 0x2b3034, roughness: 0.85 });
       const darkMat = new THREE.MeshStandardMaterial({ color: 0x11151a, roughness: 0.72, metalness: 0.12 });
@@ -4333,6 +4529,13 @@
       }
       const kneeL = box(0.24, 0.16, 0.24, -0.25, 0.62, -0.13, armorMat);
       const kneeR = box(0.24, 0.16, 0.24, 0.25, 0.62, -0.13, armorMat);
+      const cosmeticParts = [];
+      if (cosmetic === 'crown') cosmeticParts.push(box(0.72, 0.15, 0.62, 0, 2.42, 0, new THREE.MeshStandardMaterial({ color: 0xffcf68, roughness: 0.45, metalness: 0.18 })));
+      if (cosmetic === 'horns') {
+        const hornMat = new THREE.MeshStandardMaterial({ color: 0xe5d6ad, roughness: 0.5 });
+        cosmeticParts.push(box(0.14, 0.25, 0.14, -0.3, 2.42, -0.08, hornMat), box(0.14, 0.25, 0.14, 0.3, 2.42, -0.08, hornMat));
+      }
+      if (cosmetic === 'cape') cosmeticParts.push(box(0.82, 1.1, 0.08, 0, 1.32, 0.38, new THREE.MeshStandardMaterial({ color: 0x7d2636, roughness: 0.75 })));
 
       const gun = new THREE.Group();
       const gunBody = box(0.18, 0.15, 0.7, 0.42, 1.44, -0.42, armorMat);
@@ -4343,7 +4546,7 @@
       nameLabel.position.set(0, 2.78, 0);
 
       const body = torso;
-      root.add(pelvis, torso, chestPlate, neck, head, helmet, visor, leftArm, rightArm, leftLeg, rightLeg, leftBoot, rightBoot, backpack, shoulderL, shoulderR, kneeL, kneeR, gun, nameLabel);
+      root.add(pelvis, torso, chestPlate, neck, head, helmet, visor, leftArm, rightArm, leftLeg, rightLeg, leftBoot, rightBoot, backpack, shoulderL, shoulderR, kneeL, kneeR, ...cosmeticParts, gun, nameLabel);
       root.traverse((object) => object.userData.playerId = player.id);
       return { root, body, head, gun, nameLabel, leftArm, rightArm, leftLeg, rightLeg, torso };
 
@@ -4383,7 +4586,7 @@
     }
 
     function mapDisplayName(mapName = activeMap) {
-      if (mapName === 'arcade') return 'Trigger Ship';
+      if (mapName === 'arcade') return 'Trigger Shipwreck';
       if (mapName === 'citadel') return 'Trigger Dungeon';
       return 'Trigger Forest';
     }
@@ -4716,6 +4919,7 @@
       const crouchPressed = isActionPressed('crouch') || keys.has('ControlRight') || keys.has('KeyC');
       const horizontalSpeed = Math.hypot(localPlayer.velocity.x, localPlayer.velocity.z);
       const waterAmount = getWaterAmount(object.position);
+      const climbZone = climbZones.find((zone) => Math.hypot(object.position.x - zone.x, object.position.z - zone.z) < zone.radius && object.position.y < zone.top + localPlayer.eyeHeight);
       const waterSlow = THREE.MathUtils.lerp(1, 0.58, waterAmount);
       const speed = (sprinting ? 16.4 : 9.8) * waterSlow;
       const acceleration = (localPlayer.grounded ? (sprinting ? 34 : 42) : 14) * THREE.MathUtils.lerp(1, 0.72, waterAmount);
@@ -4761,7 +4965,12 @@
         localPlayer.velocity.z *= damping;
       }
 
-      if (isActionPressed('jump') && localPlayer.grounded) {
+      if (climbZone && (isActionPressed('moveForward') || isActionPressed('jump'))) {
+        localPlayer.velocity.y = 5.6;
+        localPlayer.velocity.x *= 0.45;
+        localPlayer.velocity.z *= 0.45;
+        localPlayer.grounded = false;
+      } else if (isActionPressed('jump') && localPlayer.grounded) {
         localPlayer.velocity.y = 8.2;
         localPlayer.grounded = false;
       }
@@ -4782,6 +4991,18 @@
       }
 
       resolveCollisions(previous);
+      if (activeMap === 'arcade' && (Math.abs(object.position.x) > 132 || Math.abs(object.position.z) > 46) && object.position.y < 4.4) {
+        localPlayer.health = Math.max(0, localPlayer.health - delta * 55);
+        ui.health.textContent = Math.round(localPlayer.health);
+        updateHealthBar();
+        ui.damageVignette.style.opacity = '0.7';
+        if (localPlayer.health <= 0) {
+          moveLocalToMapSpawn('arcade');
+          localPlayer.health = 100;
+          ui.health.textContent = 100;
+          updateHealthBar();
+        }
+      }
 
       const finalSpeed = Math.hypot(localPlayer.velocity.x, localPlayer.velocity.z);
       if (localPlayer.grounded && finalSpeed > 0.6) {
@@ -4829,6 +5050,9 @@
     }
 
     function getWaterAmount(position) {
+      if (activeMap === 'arcade') {
+        return (Math.abs(position.x) > 132 || Math.abs(position.z) > 46) ? 1 : 0;
+      }
       const distance = Math.hypot(position.x - 36, position.z + 32);
       return THREE.MathUtils.clamp((23 - distance) / 6, 0, 1);
     }
@@ -4898,6 +5122,7 @@
     function fireWeapon(weapon, now) {
       weaponState.lastShot = now;
       weaponState.recoil = Math.min(1, weaponState.recoil + weapon.recoil);
+      localPlayer.cameraKick = Math.min(1, localPlayer.cameraKick + weapon.recoil * 0.9);
       weaponState.muzzle = 1;
       const ammoState = weaponState.ammo[localPlayer.weapon];
       if (ammoState && ammoState.current !== Infinity) {
@@ -4968,14 +5193,14 @@
       for (const [id, rig] of playerMeshes) {
         const target = playerTargets.get(id);
         if (!target) continue;
-        const age = target.updatedAt ? Math.min(0.18, Math.max(0, (Date.now() - target.updatedAt) / 1000)) : 0;
+        const age = target.updatedAt ? Math.min(0.28, Math.max(0, (Date.now() - target.updatedAt) / 1000)) : 0;
         tempVector.set(
           target.position.x + (target.velocity ? target.velocity.x * age : 0),
           target.position.y - 2,
           target.position.z + (target.velocity ? target.velocity.z * age : 0)
         );
-        rig.root.position.lerp(tempVector, Math.min(1, delta * 9));
-        rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, target.rotation.y, Math.min(1, delta * 8));
+        rig.root.position.lerp(tempVector, Math.min(1, delta * 14));
+        rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, target.rotation.y, Math.min(1, delta * 12));
         const speed = target.velocity ? Math.hypot(target.velocity.x, target.velocity.z) : 0;
         const stride = worldTime * (speed > 11 ? 10 : 6.5) + id.length;
         const walk = THREE.MathUtils.clamp(speed / 12, 0, 1);
@@ -5297,6 +5522,7 @@
       const bobX = Math.sin(localPlayer.bob) * 0.035 * moveAmount * (1 - weaponState.adsAmount * 0.75);
       const bobY = Math.abs(Math.cos(localPlayer.bob)) * 0.04 * moveAmount * (1 - weaponState.adsAmount * 0.75);
       weaponState.recoil = Math.max(0, weaponState.recoil - delta * 4.2);
+      localPlayer.cameraKick = Math.max(0, localPlayer.cameraKick - delta * 5.2);
       weaponState.muzzle = Math.max(0, weaponState.muzzle - delta * 10);
       weaponState.adsAmount = THREE.MathUtils.lerp(weaponState.adsAmount, aiming ? 1 : 0, Math.min(1, delta * 13));
       const reloadActive = weaponState.reloadWeapon === localPlayer.weapon && weaponState.reloadingUntil > performance.now();
@@ -5319,7 +5545,7 @@
       weaponModel.flash.intensity = weaponState.muzzle * 10;
       weaponModel.cone.material.opacity = weaponState.muzzle * 0.86;
 
-      const targetFov = THREE.MathUtils.lerp(weapon.hipFov, weapon.adsFov, weaponState.adsAmount);
+      const targetFov = THREE.MathUtils.lerp(weapon.hipFov, weapon.adsFov, weaponState.adsAmount) + localPlayer.cameraKick * 2.2;
       camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, delta * 12);
       camera.updateProjectionMatrix();
       ui.scope.className = aiming ? `active ${localPlayer.weapon}` : '';
@@ -5330,7 +5556,7 @@
     let lastNetworkUpdate = 0;
     function updateNetworking() {
       const now = performance.now();
-      if (!localPlayer.id || now - lastNetworkUpdate < 50) return;
+      if (!localPlayer.id || now - lastNetworkUpdate < 33) return;
       lastNetworkUpdate = now;
       const object = controls.getObject();
       const networkPosition = object.position.clone();
@@ -5372,9 +5598,18 @@
         prop.children[1].position.y = 0.42 + Math.sin(worldTime * 2.4 + prop.position.x) * 0.08;
         const distance = prop.position.distanceTo(player);
         if (distance < 2.1) {
-          localPlayer.health = Math.min(100, localPlayer.health + 18 * delta);
-          ui.health.textContent = Math.round(localPlayer.health);
-          updateHealthBar();
+          if (prop.userData.pickupType === 'ammo') {
+            const ammoState = weaponState.ammo[localPlayer.weapon];
+            const weapon = weapons[localPlayer.weapon];
+            if (ammoState && weapon && weapon.reserve !== Infinity) {
+              ammoState.reserve = Math.min(weapon.reserve, ammoState.reserve + Math.ceil(8 * delta));
+              updateAmmoDisplay();
+            }
+          } else {
+            localPlayer.health = Math.min(100, localPlayer.health + 18 * delta);
+            ui.health.textContent = Math.round(localPlayer.health);
+            updateHealthBar();
+          }
           prop.scale.setScalar(1 + Math.sin(worldTime * 16) * 0.08);
         } else {
           prop.scale.lerp(new THREE.Vector3(1, 1, 1), Math.min(1, delta * 6));

@@ -4,7 +4,7 @@ const path = require('path');
 const { Server } = require('socket.io');
 
 const PORT = process.env.PORT || 3000;
-const TICK_RATE = 20;
+const TICK_RATE = 30;
 const VOTE_SECONDS = 30;
 const BATTLE_SECONDS = 180;
 
@@ -28,6 +28,7 @@ const zombies = new Map();
 const playerSettings = new Map();
 const friendRequests = new Map();
 const friends = new Map();
+const lobbyInvites = new Map();
 const DEFAULT_LOBBY = 'public';
 const lobbySettings = new Map();
 const BAD_WORDS = ['fuck', 'shit', 'bitch', 'asshole', 'bastard', 'damn', 'crap', 'slur'];
@@ -46,6 +47,7 @@ function publicPlayer(player) {
     name: player.name,
     color: player.color,
     style: player.style,
+    cosmetic: player.cosmetic,
     weapon: player.weapon,
     health: player.health,
     score: player.score,
@@ -139,7 +141,7 @@ function publicLobby(lobby = DEFAULT_LOBBY) {
     mode: config.mode,
     restricted: config.restricted,
     started: config.started,
-    players: lobbyPlayers.map((player) => ({ id: player.id, name: player.name, color: player.color, style: player.style })),
+    players: lobbyPlayers.map((player) => ({ id: player.id, name: player.name, color: player.color, style: player.style, cosmetic: player.cosmetic })),
     playerCount: lobbyPlayers.length,
   };
 }
@@ -235,6 +237,7 @@ io.on('connection', (socket) => {
     lobby: DEFAULT_LOBBY,
     color: randomColor(),
     style: 'classic',
+    cosmetic: 'none',
     weapon: 'assault',
     health: 100,
     score: 0,
@@ -294,10 +297,14 @@ io.on('connection', (socket) => {
     if (typeof customization.style === 'string') {
       current.style = ['classic', 'scout', 'heavy'].includes(customization.style) ? customization.style : 'classic';
     }
+    if (typeof customization.cosmetic === 'string') {
+      current.cosmetic = ['none', 'crown', 'horns', 'cape'].includes(customization.cosmetic) ? customization.cosmetic : 'none';
+    }
     io.to(lobbyRoom(current.lobby)).emit('playerCustomized', {
       id: socket.id,
       color: current.color,
       style: current.style,
+      cosmetic: current.cosmetic,
     });
     emitLobbyState(current.lobby);
     emitLobbyDirectory();
@@ -368,6 +375,8 @@ io.on('connection', (socket) => {
         map: config.map,
         mode: config.mode,
       });
+      if (!lobbyInvites.has(targetId)) lobbyInvites.set(targetId, new Set());
+      lobbyInvites.get(targetId).add(current.lobby);
     }
   });
 
@@ -404,7 +413,12 @@ io.on('connection', (socket) => {
     if (!current) return;
     const nextLobby = sanitizeLobby(lobbyName);
     const config = lobbyConfig(nextLobby);
-    if (config.started && config.hostId !== socket.id) return;
+    const invited = lobbyInvites.get(socket.id)?.has(nextLobby);
+    if (config.started && config.hostId !== socket.id && nextLobby !== 'mega-server' && !invited) {
+      if (typeof callback === 'function') callback({ error: 'That match already started. Ask a friend for an invite.' });
+      return;
+    }
+    if (invited) lobbyInvites.get(socket.id).delete(nextLobby);
     if (!config.hostId) {
       config.hostId = socket.id;
       config.name = nextLobby === 'mega-server' ? 'Mega Portal' : config.name;
@@ -586,6 +600,7 @@ io.on('connection', (socket) => {
     const lobby = current ? current.lobby : DEFAULT_LOBBY;
     players.delete(socket.id);
     friendRequests.delete(socket.id);
+    lobbyInvites.delete(socket.id);
     for (const pending of friendRequests.values()) pending.delete(socket.id);
     friends.delete(socket.id);
     for (const [friendId, friendSet] of friends) {
