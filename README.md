@@ -133,3 +133,11 @@ npm start
 - Added an all-played accounts browser on the login screen.
 - Changed weapon skins to alter weapon attachments, rails, glass, materials, and design accents instead of simply recoloring the whole gun.
 - Smoothed Mega Portal and lobby host behavior for multiplayer sessions.
+
+### v1.6 - Lobby Clarity, Invites, and Performance
+- Simplified lobby creation with clearer steps, create/join buttons, host status text, and lobby start feedback.
+- Added online friend lobby invites so friends can jump into your lobby from an invite popup.
+- Made Mega Portal pick a random map when it starts and between rounds.
+- Hid the first-person gun during scoped aim so the weapon no longer blocks the sight picture.
+- Made Trigger Forest much denser with more blocky trees and rocks while respecting low-detail mode.
+- Reduced multiplayer bandwidth with lower movement update rates, volatile state packets, and less frequent full round broadcasts.

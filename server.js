@@ -4,7 +4,7 @@ const path = require('path');
 const { Server } = require('socket.io');
 
 const PORT = process.env.PORT || 3000;
-const TICK_RATE = 30;
+const TICK_RATE = 20;
 const VOTE_SECONDS = 30;
 const BATTLE_SECONDS = 180;
 
@@ -151,10 +151,14 @@ function emitLobbyDirectory() {
   io.emit('lobbyList', lobbies);
 }
 
-function emitLobbyState(lobby = DEFAULT_LOBBY) {
+function emitLobbyState(lobby = DEFAULT_LOBBY, movementOnly = false) {
   const room = lobbyRoom(lobby);
   const lobbyPlayers = playersInLobby(lobby);
-  io.to(room).emit('state', lobbyPlayers.map(publicPlayer));
+  io.to(room).volatile.emit('state', lobbyPlayers.map(publicPlayer));
+  if (movementOnly) {
+    if (round.mode === 'coop') io.to(room).volatile.emit('zombies', Array.from(zombies.values()).map(publicZombie));
+    return;
+  }
   io.to(room).emit('playerCount', lobbyPlayers.length);
   io.to(room).emit('roundState', publicRound(lobby));
   if (round.mode === 'coop') io.to(room).emit('zombies', Array.from(zombies.values()).map(publicZombie));
@@ -166,8 +170,8 @@ function activeLobbies() {
   return lobbies;
 }
 
-function emitAllLobbyStates() {
-  for (const lobby of activeLobbies()) emitLobbyState(lobby);
+function emitAllLobbyStates(movementOnly = false) {
+  for (const lobby of activeLobbies()) emitLobbyState(lobby, movementOnly);
 }
 
 function publicZombie(zombie) {
@@ -349,6 +353,24 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('inviteFriend', (targetId) => {
+    const current = players.get(socket.id);
+    const target = players.get(targetId);
+    if (!current || !target || targetId === socket.id) return;
+    if (!(friends.get(socket.id) || new Set()).has(targetId)) return;
+    const targetSocket = io.sockets.sockets.get(targetId);
+    if (targetSocket) {
+      const config = lobbyConfig(current.lobby);
+      targetSocket.emit('lobbyInvite', {
+        fromId: socket.id,
+        fromName: current.name,
+        lobby: current.lobby,
+        map: config.map,
+        mode: config.mode,
+      });
+    }
+  });
+
   socket.on('listLobbies', (callback) => {
     const lobbies = Array.from(lobbySettings.keys())
       .map(publicLobby)
@@ -387,7 +409,7 @@ io.on('connection', (socket) => {
       config.hostId = socket.id;
       config.name = nextLobby === 'mega-server' ? 'Mega Portal' : config.name;
       if (nextLobby === 'mega-server') {
-        config.map = 'hydro';
+        config.map = randomMap();
         config.mode = 'battle';
         config.started = true;
         startRound(config.mode, config.map);
@@ -583,10 +605,12 @@ io.on('connection', (socket) => {
   });
 });
 
+let tickCounter = 0;
 setInterval(() => {
   updateRound();
   updateZombies(1 / TICK_RATE);
-  emitAllLobbyStates();
+  tickCounter += 1;
+  emitAllLobbyStates(tickCounter % TICK_RATE !== 0);
 }, 1000 / TICK_RATE);
 
 function updateRound() {
@@ -602,6 +626,13 @@ function updateRound() {
   }
 
   if (round.phase === 'playing' && round.mode === 'battle' && now >= round.endsAt) {
+    const mega = lobbySettings.get('mega-server');
+    if (mega && mega.started && playersInLobby('mega-server').length > 0) {
+      mega.map = randomMap();
+      startRound(mega.mode || getWinningVote(), mega.map);
+      io.to(lobbyRoom('mega-server')).emit('lobbyState', publicLobby('mega-server'));
+      return;
+    }
     if (votes.size > 0) {
       startRound(getWinningVote());
     } else {
@@ -686,6 +717,11 @@ function getWinningMap() {
   }
   if (citadel > hydro && citadel >= arcade) return 'citadel';
   return arcade > hydro ? 'arcade' : 'hydro';
+}
+
+function randomMap() {
+  const maps = ['hydro', 'arcade', 'citadel'];
+  return maps[Math.floor(Math.random() * maps.length)];
 }
 
 function isValidMap(mapName) {

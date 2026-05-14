@@ -968,6 +968,21 @@
       box-shadow: inset 0 0 30px rgba(129, 234, 255, 0.06);
     }
 
+    .lobbySteps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .lobbySteps span {
+      padding: 8px;
+      border: 1px solid rgba(129, 234, 255, 0.18);
+      background: rgba(129, 234, 255, 0.06);
+      text-align: center;
+    }
+
     #lobbyHint {
       padding: 8px 10px;
       border: 1px solid rgba(255, 226, 151, 0.22);
@@ -975,6 +990,14 @@
       color: rgba(255, 255, 255, 0.78);
       font-size: 13px;
       line-height: 1.35;
+    }
+
+    #lobbyStatus {
+      padding: 8px 10px;
+      border-left: 3px solid rgba(129, 234, 255, 0.7);
+      background: rgba(129, 234, 255, 0.07);
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
     }
 
     #lobbyList,
@@ -988,7 +1011,7 @@
     }
 
     #lobbyList {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       max-height: none;
       min-height: 210px;
       align-items: center;
@@ -1007,10 +1030,11 @@
     }
 
     .lobbyEntry.portal {
-      min-height: 118px;
-      flex-direction: column;
-      justify-content: center;
-      text-align: center;
+      position: relative;
+      min-height: 84px;
+      align-items: flex-start;
+      justify-content: space-between;
+      text-align: left;
       color: #eef5ff;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
@@ -1018,20 +1042,23 @@
       border: 2px solid rgba(154, 225, 255, 0.34);
       box-shadow: 0 0 22px rgba(82, 173, 255, 0.18);
       cursor: pointer;
-      transform: rotateX(3deg);
+      transform: none;
       transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
     }
 
     .lobbyEntry.portal:hover {
-      transform: translateY(-3px) rotateX(3deg);
+      transform: translateY(-2px);
       border-color: rgba(255, 226, 151, 0.65);
       box-shadow: 0 0 28px rgba(129, 234, 255, 0.28);
     }
 
     .lobbyEntry.portal::before {
       content: "";
-      width: 44px;
-      height: 56px;
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      width: 24px;
+      height: 34px;
       border: 4px solid rgba(170, 235, 255, 0.88);
       background: linear-gradient(180deg, rgba(106, 76, 230, 0.62), rgba(42, 219, 255, 0.24));
       box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.2), 0 0 18px rgba(98, 208, 255, 0.38);
@@ -1043,14 +1070,24 @@
     }
 
     .lobbyEntry.portal.mega {
-      grid-column: span 2;
+      grid-column: 1 / -1;
       background:
         radial-gradient(circle at 50% 60%, rgba(255, 226, 151, 0.46), rgba(124, 76, 236, 0.25) 50%, rgba(0, 0, 0, 0.22) 76%);
       border-color: rgba(255, 226, 151, 0.78);
     }
 
     .lobbyEntry.portal button {
-      display: none;
+      display: inline-grid;
+      place-items: center;
+    }
+
+    #friendInviteList {
+      display: grid;
+      gap: 6px;
+      max-height: 120px;
+      overflow-y: auto;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 13px;
     }
 
     .lobbyEntry button,
@@ -1631,15 +1668,18 @@
           <button class="mapButton" data-map="citadel" type="button">Trigger Dungeon<small>Underground torchlit maze with no escape.</small></button>
         </div>
         <div id="lobbyMenu">
-          <div id="lobbyHint">Pick a map, create a portal lobby, or step into an existing portal. Hosts can start the match once everyone is ready.</div>
+          <div id="lobbyHint">Choose a map, press Create Lobby, then invite friends or wait for players. To join someone else, press Join on their lobby.</div>
+          <div class="lobbySteps"><span>1. Choose map</span><span>2. Create or join</span><span>3. Host starts</span></div>
+          <div id="lobbyStatus">You are in the menu. Create a lobby to become host.</div>
           <div class="settingRow">
             <label><input id="restrictSniper" type="checkbox"> Restrict sniper</label>
             <label><input id="restrictLauncher" type="checkbox"> Restrict launcher</label>
           </div>
-          <button id="createLobbyButton" type="button">Create Lobby</button>
-          <button id="refreshLobbiesButton" type="button">Find Lobbies</button>
+          <button id="createLobbyButton" type="button">Create Lobby With Selected Map</button>
+          <button id="refreshLobbiesButton" type="button">Refresh Joinable Lobbies</button>
           <div id="lobbyList"></div>
           <div id="lobbyMembers"></div>
+          <div id="friendInviteList"></div>
           <button id="startLobbyButton" type="button">Start Lobby</button>
         </div>
         <div id="profileSummary">
@@ -1798,6 +1838,7 @@
     const hitMarkers = [];
     const keys = new Set();
     const friends = new Set();
+    const friendRoster = new Map();
     const pendingFriendRequests = new Set();
     const textureCache = new Map();
     let mapSeed = 1;
@@ -2011,6 +2052,8 @@
       menuShopButtons: Array.from(document.querySelectorAll('#menuShop .shopCard')),
       lobbyList: document.getElementById('lobbyList'),
       lobbyMembers: document.getElementById('lobbyMembers'),
+      lobbyStatus: document.getElementById('lobbyStatus'),
+      friendInviteList: document.getElementById('friendInviteList'),
       createLobbyButton: document.getElementById('createLobbyButton'),
       refreshLobbiesButton: document.getElementById('refreshLobbiesButton'),
       startLobbyButton: document.getElementById('startLobbyButton'),
@@ -2095,7 +2138,7 @@
       ui.showPerformanceToggle.checked = settings.showPerformance;
       ui.lowDetailToggle.checked = settings.lowDetail;
       ui.performancePanel.classList.toggle('hidden', !settings.showPerformance);
-      renderer.setPixelRatio(settings.lowDetail ? 1 : Math.min(window.devicePixelRatio, 1.8));
+      renderer.setPixelRatio(settings.lowDetail ? 1 : Math.min(window.devicePixelRatio, 1.45));
       renderer.shadowMap.enabled = !settings.lowDetail;
       renderer.setSize(window.innerWidth, window.innerHeight);
       updateKeybindButtons();
@@ -2467,10 +2510,19 @@
       ui.lobbyList.innerHTML = '';
       const mega = document.createElement('div');
       mega.className = 'lobbyEntry portal mega';
-      mega.innerHTML = `<strong>Mega Portal</strong><span>Open server</span><small>Anyone can join</small>`;
+      mega.innerHTML = `<strong>Mega Portal</strong><span>Instant public match</span><small>Map changes randomly every round</small>`;
+      const megaJoin = document.createElement('button');
+      megaJoin.type = 'button';
+      megaJoin.textContent = 'Play Now';
+      mega.appendChild(megaJoin);
       mega.addEventListener('click', () => {
         gameStarted = true;
-        socket.emit('joinLobby', 'mega-server');
+        socket.emit('joinLobby', 'mega-server', (lobbyState) => {
+          if (lobbyState) {
+            renderLobbyMembers(lobbyState);
+            ui.status.textContent = `Mega Portal - ${mapDisplayName(lobbyState.map)}`;
+          }
+        });
         ui.loginOverlay.style.display = 'none';
         ui.notice.style.display = 'block';
       });
@@ -2480,10 +2532,10 @@
         const lobby = lobbies[i] || { id: `portal-${i + 1}`, name: `Empty Portal ${i + 1}`, map: activeMap, playerCount: 0 };
         const row = document.createElement('div');
         row.className = `lobbyEntry portal${emptyPortal ? ' empty' : ''}`;
-        row.innerHTML = `<strong>${lobby.name}</strong><span>${lobby.playerCount} players</span><small>${mapDisplayName(lobby.map)}</small>`;
+        row.innerHTML = `<strong>${lobby.name}</strong><span>${lobby.playerCount} player${lobby.playerCount === 1 ? '' : 's'}</span><small>${emptyPortal ? 'Empty slot - create here' : mapDisplayName(lobby.map)}</small>`;
         const join = document.createElement('button');
         join.type = 'button';
-        join.textContent = 'Join';
+        join.textContent = emptyPortal ? 'Create' : 'Join';
         join.addEventListener('click', (event) => {
           event.stopPropagation();
           if (emptyPortal) {
@@ -2492,9 +2544,15 @@
               map: activeMap,
               mode: localPlayer.vote || 'battle',
               restricted: [],
-            }, renderLobbyMembers);
+            }, (lobbyState) => {
+              renderLobbyMembers(lobbyState);
+              ui.lobbyStatus.textContent = `Created ${lobbyState.name}. You are host - invite friends, then Start Lobby.`;
+            });
           } else {
-            socket.emit('joinLobby', lobby.id);
+            socket.emit('joinLobby', lobby.id, (lobbyState) => {
+              renderLobbyMembers(lobbyState);
+              ui.lobbyStatus.textContent = `Joined ${lobbyState.name}. Waiting for host to start.`;
+            });
           }
         });
         row.addEventListener('click', () => join.click());
@@ -2508,17 +2566,12 @@
       ui.lobbyMembers.innerHTML = '';
       if (!lobby || !Array.isArray(lobby.players)) return;
       const isHost = lobby.hostId === localPlayer.id;
+      ui.lobbyStatus.textContent = isHost
+        ? `Hosting ${lobby.name} on ${mapDisplayName(lobby.map)}. Invite friends or press Start Lobby.`
+        : `In ${lobby.name}. Waiting for ${lobby.hostName || 'host'} to start.`;
       for (const member of lobby.players) {
         const row = document.createElement('div');
         row.className = 'memberEntry';
-        if (member.id !== localPlayer.id) {
-          const friend = document.createElement('button');
-          friend.type = 'button';
-          friend.textContent = friends.has(member.id) ? 'Friends' : pendingFriendRequests.has(member.id) ? 'Sent' : 'Friend';
-          friend.disabled = friends.has(member.id) || pendingFriendRequests.has(member.id);
-          friend.addEventListener('click', () => sendFriendRequest(member.id, member.name));
-          row.appendChild(friend);
-        }
         row.innerHTML = `<span>${member.name}${member.id === lobby.hostId ? ' · host' : ''}</span>`;
         if (member.id !== localPlayer.id) {
           const friend = document.createElement('button');
@@ -2540,6 +2593,31 @@
       ui.startLobbyButton.style.display = isHost ? 'block' : 'none';
       if (lobby.map) setMap(lobby.map);
       updateWeaponLocks();
+      renderFriendInvites();
+    }
+
+    function renderFriendInvites() {
+      if (!ui.friendInviteList) return;
+      ui.friendInviteList.innerHTML = '';
+      const onlineFriends = Array.from(friendRoster.values());
+      if (!onlineFriends.length) {
+        ui.friendInviteList.innerHTML = '<div class="memberEntry"><span>No online friends yet. Friend players from the lobby list or aim at them and press F.</span></div>';
+        return;
+      }
+      for (const friend of onlineFriends) {
+        const row = document.createElement('div');
+        row.className = 'memberEntry';
+        row.innerHTML = `<span>${friend.name}</span>`;
+        const invite = document.createElement('button');
+        invite.type = 'button';
+        invite.textContent = 'Invite';
+        invite.addEventListener('click', () => {
+          socket.emit('inviteFriend', friend.id);
+          addFriendMessage(`Invite sent to ${friend.name}.`);
+        });
+        row.appendChild(invite);
+        ui.friendInviteList.appendChild(row);
+      }
     }
 
     function updatePerformanceStats(delta, renderMs = 0) {
@@ -2711,11 +2789,33 @@
     });
     socket.on('friendsUpdated', ({ friends: friendList } = {}) => {
       friends.clear();
-      for (const friend of friendList || []) friends.add(friend.id);
+      friendRoster.clear();
+      for (const friend of friendList || []) {
+        friends.add(friend.id);
+        friendRoster.set(friend.id, friend);
+      }
       addFriendMessage(`Friends updated: ${friends.size}`);
       if (currentLobbyState) renderLobbyMembers(currentLobbyState);
+      renderFriendInvites();
     });
     socket.on('chatMessage', addChatMessage);
+    socket.on('lobbyInvite', ({ fromName, lobby, map }) => {
+      const item = document.createElement('div');
+      item.className = 'friendItem';
+      item.textContent = `${fromName || 'A friend'} invited you to ${lobby} (${mapDisplayName(map)}).`;
+      const join = document.createElement('button');
+      join.type = 'button';
+      join.textContent = 'Join';
+      join.addEventListener('click', () => {
+        socket.emit('joinLobby', lobby, renderLobbyMembers);
+        gameStarted = false;
+        ui.loginOverlay.style.display = 'grid';
+        ui.notice.style.display = 'none';
+        item.remove();
+      });
+      item.appendChild(join);
+      ui.friendPanel.prepend(item);
+    });
     socket.on('lobbyStarted', (lobby) => {
       currentLobbyState = lobby;
       gameStarted = true;
@@ -2875,10 +2975,15 @@
         map: activeMap,
         mode: localPlayer.vote || 'battle',
         restricted,
-      }, renderLobbyMembers);
+      }, (lobbyState) => {
+        renderLobbyMembers(lobbyState);
+        ui.lobbyStatus.textContent = `Created ${lobbyState.name}. You are host - invite friends, then Start Lobby.`;
+      });
     });
     ui.refreshLobbiesButton.addEventListener('click', () => socket.emit('listLobbies', renderLobbyList));
-    ui.startLobbyButton.addEventListener('click', () => socket.emit('startLobby'));
+    ui.startLobbyButton.addEventListener('click', () => socket.emit('startLobby', (lobbyState) => {
+      if (lobbyState) ui.lobbyStatus.textContent = `Starting ${lobbyState.name} on ${mapDisplayName(lobbyState.map)}...`;
+    }));
     ui.joinButton.addEventListener('click', joinWithName);
     ui.usernameInput.addEventListener('keydown', (event) => {
       if (event.code === 'Enter') joinWithName();
@@ -2916,7 +3021,7 @@
 
     animate();
     requestPing();
-    window.setInterval(requestPing, 3000);
+    window.setInterval(requestPing, 5000);
 
     function sanitizeLobbyName(value) {
       return String(value || 'public').replace(/[^\w -]/g, '').trim().slice(0, 24) || 'public';
@@ -3091,14 +3196,16 @@
       addArena(forestFloor);
       addForestParticles();
 
-      for (let i = 0; i < 320; i++) {
+      const treeCount = settings.lowDetail ? 260 : 620;
+      const rockCount = settings.lowDetail ? 120 : 245;
+      for (let i = 0; i < treeCount; i++) {
         const x = (rand() - 0.5) * 386;
         const z = (rand() - 0.5) * 386;
         if (Math.hypot(x, z) < 16) continue;
         addBlockTree(x, z, 4 + rand() * 5, leafMats[Math.floor(rand() * leafMats.length)]);
       }
 
-      for (let i = 0; i < 155; i++) {
+      for (let i = 0; i < rockCount; i++) {
         addBlockRock((rand() - 0.5) * 378, (rand() - 0.5) * 378, 1 + rand() * 2.8);
       }
 
@@ -5217,13 +5324,13 @@
       camera.updateProjectionMatrix();
       ui.scope.className = aiming ? `active ${localPlayer.weapon}` : '';
       ui.crosshair.classList.toggle('ads', aiming);
-      weaponModel.group.visible = !(localPlayer.weapon === 'sniper' && weaponState.adsAmount > 0.82);
+      weaponModel.group.visible = weaponState.adsAmount < 0.78;
     }
 
     let lastNetworkUpdate = 0;
     function updateNetworking() {
       const now = performance.now();
-      if (!localPlayer.id || now - lastNetworkUpdate < 33) return;
+      if (!localPlayer.id || now - lastNetworkUpdate < 50) return;
       lastNetworkUpdate = now;
       const object = controls.getObject();
       const networkPosition = object.position.clone();
