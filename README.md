@@ -123,3 +123,13 @@ npm start
 - Added an inventory panel for owned guns and equipped skins.
 - Added Trigger Citadel, a deterministic floating block ruin map.
 - Synced customized player colors and styles to other clients.
+
+### v1.5 - Dungeon, Chat, Friends, and Lobby Polish
+- Replaced Trigger Citadel with Trigger Dungeon, a deterministic underground maze with torches, pickups, and spinning crystals.
+- Made Trigger Forest cabins enterable and added ambient tree/particle motion.
+- Improved Trigger Ship spawning, deck collision, side rails, and animated sea foam.
+- Added censored in-lobby chat.
+- Improved friend requests with lobby buttons, duplicate prevention, and synced friend status.
+- Added an all-played accounts browser on the login screen.
+- Changed weapon skins to alter weapon attachments, rails, glass, materials, and design accents instead of simply recoloring the whole gun.
+- Smoothed Mega Portal and lobby host behavior for multiplayer sessions.

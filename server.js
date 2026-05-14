@@ -26,8 +26,11 @@ const votes = new Map();
 const mapVotes = new Map();
 const zombies = new Map();
 const playerSettings = new Map();
+const friendRequests = new Map();
+const friends = new Map();
 const DEFAULT_LOBBY = 'public';
 const lobbySettings = new Map();
+const BAD_WORDS = ['fuck', 'shit', 'bitch', 'asshole', 'bastard', 'damn', 'crap', 'slur'];
 let zombieCounter = 0;
 let currentMap = 'hydro';
 let round = {
@@ -183,6 +186,44 @@ function randomColor() {
   return `hsl(${hue}, 72%, 58%)`;
 }
 
+function friendList(id) {
+  return Array.from(friends.get(id) || [])
+    .map((friendId) => players.get(friendId))
+    .filter(Boolean)
+    .map((friend) => ({ id: friend.id, name: friend.name }));
+}
+
+function emitFriends(id) {
+  const socket = io.sockets.sockets.get(id);
+  if (socket) socket.emit('friendsUpdated', { friends: friendList(id) });
+}
+
+function censorMessage(input) {
+  let message = String(input || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+  for (const word of BAD_WORDS) {
+    const pattern = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    message = message.replace(pattern, (match) => '*'.repeat(Math.max(3, match.length)));
+  }
+  return message;
+}
+
+function randomSpawnForMap(mapName = currentMap) {
+  if (mapName === 'arcade') {
+    return { x: (Math.random() - 0.5) * 22, y: 4.95, z: (Math.random() - 0.5) * 52 };
+  }
+  if (mapName === 'citadel') {
+    const spots = [
+      { x: 0, y: 2, z: 0 },
+      { x: -58, y: 2, z: -58 },
+      { x: 58, y: 2, z: -58 },
+      { x: -58, y: 2, z: 58 },
+      { x: 58, y: 2, z: 58 },
+    ];
+    return spots[Math.floor(Math.random() * spots.length)];
+  }
+  return { x: (Math.random() - 0.5) * 90, y: 2.1, z: (Math.random() - 0.5) * 90 };
+}
+
 io.on('connection', (socket) => {
   const player = {
     id: socket.id,
@@ -193,7 +234,7 @@ io.on('connection', (socket) => {
     weapon: 'assault',
     health: 100,
     score: 0,
-    position: { x: (Math.random() - 0.5) * 30, y: 2, z: (Math.random() - 0.5) * 30 },
+    position: randomSpawnForMap('hydro'),
     rotation: { x: 0, y: 0, z: 0 },
     velocity: { x: 0, y: 0, z: 0 },
     shooting: false,
@@ -213,6 +254,7 @@ io.on('connection', (socket) => {
     lobby: player.lobby,
     lobbyState: publicLobby(player.lobby),
   });
+  emitFriends(socket.id);
 
   socket.to(lobbyRoom(player.lobby)).emit('playerJoined', publicPlayer(player));
   emitLobbyState(player.lobby);
@@ -257,6 +299,56 @@ io.on('connection', (socket) => {
     emitLobbyDirectory();
   });
 
+  socket.on('friendRequest', (targetId) => {
+    const current = players.get(socket.id);
+    const target = players.get(targetId);
+    if (!current || !target || targetId === socket.id) return;
+    if ((friends.get(socket.id) || new Set()).has(targetId)) {
+      socket.emit('friendResponse', { fromId: targetId, fromName: target.name, accepted: true });
+      emitFriends(socket.id);
+      return;
+    }
+    if (!friendRequests.has(targetId)) friendRequests.set(targetId, new Set());
+    if (friendRequests.get(targetId).has(socket.id)) return;
+    friendRequests.get(targetId).add(socket.id);
+    const targetSocket = io.sockets.sockets.get(targetId);
+    if (targetSocket) {
+      targetSocket.emit('friendRequest', { fromId: socket.id, fromName: current.name });
+    }
+  });
+
+  socket.on('friendResponse', ({ targetId, accepted } = {}) => {
+    const current = players.get(socket.id);
+    const target = players.get(targetId);
+    if (!current || !target) return;
+    if (friendRequests.has(socket.id)) friendRequests.get(socket.id).delete(targetId);
+    if (accepted) {
+      if (!friends.has(socket.id)) friends.set(socket.id, new Set());
+      if (!friends.has(targetId)) friends.set(targetId, new Set());
+      friends.get(socket.id).add(targetId);
+      friends.get(targetId).add(socket.id);
+      emitFriends(socket.id);
+      emitFriends(targetId);
+    }
+    const targetSocket = io.sockets.sockets.get(targetId);
+    if (targetSocket) {
+      targetSocket.emit('friendResponse', { fromId: socket.id, fromName: current.name, accepted: Boolean(accepted) });
+    }
+  });
+
+  socket.on('chatMessage', (message) => {
+    const current = players.get(socket.id);
+    if (!current) return;
+    const clean = censorMessage(message);
+    if (!clean) return;
+    io.to(lobbyRoom(current.lobby)).emit('chatMessage', {
+      id: socket.id,
+      name: current.name,
+      message: clean,
+      at: Date.now(),
+    });
+  });
+
   socket.on('listLobbies', (callback) => {
     const lobbies = Array.from(lobbySettings.keys())
       .map(publicLobby)
@@ -291,6 +383,16 @@ io.on('connection', (socket) => {
     const nextLobby = sanitizeLobby(lobbyName);
     const config = lobbyConfig(nextLobby);
     if (config.started && config.hostId !== socket.id) return;
+    if (!config.hostId) {
+      config.hostId = socket.id;
+      config.name = nextLobby === 'mega-server' ? 'Mega Portal' : config.name;
+      if (nextLobby === 'mega-server') {
+        config.map = 'hydro';
+        config.mode = 'battle';
+        config.started = true;
+        startRound(config.mode, config.map);
+      }
+    }
     moveToLobby(socket, current, nextLobby);
     socket.emit('init', {
       id: socket.id,
@@ -303,6 +405,10 @@ io.on('connection', (socket) => {
     socket.to(lobbyRoom(nextLobby)).emit('playerJoined', publicPlayer(current));
     emitLobbyState(nextLobby);
     io.to(lobbyRoom(nextLobby)).emit('lobbyState', publicLobby(nextLobby));
+    if (config.started) {
+      socket.emit('lobbyStarted', publicLobby(nextLobby));
+      socket.emit('mapState', config.map);
+    }
     emitLobbyDirectory();
     if (typeof callback === 'function') callback(publicLobby(nextLobby));
   });
@@ -401,11 +507,7 @@ io.on('connection', (socket) => {
     if (target.health <= 0) {
       attacker.score += 1;
       target.health = 100;
-      target.position = {
-        x: (Math.random() - 0.5) * 70,
-        y: 2,
-        z: (Math.random() - 0.5) * 70,
-      };
+      target.position = randomSpawnForMap(lobbyConfig(target.lobby).map || currentMap);
       io.to(lobbyRoom(attacker.lobby)).emit('playerRespawned', {
         id: targetId,
         by: socket.id,
@@ -461,6 +563,12 @@ io.on('connection', (socket) => {
     const current = players.get(socket.id);
     const lobby = current ? current.lobby : DEFAULT_LOBBY;
     players.delete(socket.id);
+    friendRequests.delete(socket.id);
+    for (const pending of friendRequests.values()) pending.delete(socket.id);
+    friends.delete(socket.id);
+    for (const [friendId, friendSet] of friends) {
+      if (friendSet.delete(socket.id)) emitFriends(friendId);
+    }
     votes.delete(socket.id);
     mapVotes.delete(socket.id);
     const config = lobbyConfig(lobby);
@@ -647,11 +755,7 @@ function updateZombies(delta) {
       nearest.health = Math.max(0, nearest.health - damage);
       if (nearest.health <= 0) {
         nearest.health = 100;
-        nearest.position = {
-          x: (Math.random() - 0.5) * 40,
-          y: 2,
-          z: (Math.random() - 0.5) * 40,
-        };
+        nearest.position = randomSpawnForMap(lobbyConfig(nearest.lobby).map || currentMap);
         io.to(lobbyRoom(nearest.lobby)).emit('playerRespawned', {
           id: nearest.id,
           by: 'zombie',
