@@ -411,7 +411,8 @@ io.on('connection', (socket) => {
   socket.on('joinLobby', (lobbyName, callback) => {
     const current = players.get(socket.id);
     if (!current) return;
-    const nextLobby = sanitizeLobby(lobbyName);
+    const joinRequest = lobbyName && typeof lobbyName === 'object' ? lobbyName : { lobby: lobbyName };
+    const nextLobby = sanitizeLobby(joinRequest.lobby);
     const config = lobbyConfig(nextLobby);
     const invited = lobbyInvites.get(socket.id)?.has(nextLobby);
     if (config.started && config.hostId !== socket.id && nextLobby !== 'mega-server' && !invited) {
@@ -424,10 +425,14 @@ io.on('connection', (socket) => {
       config.name = nextLobby === 'mega-server' ? 'Mega Portal' : config.name;
       if (nextLobby === 'mega-server') {
         config.map = randomMap();
-        config.mode = 'battle';
+        config.mode = joinRequest.mode === 'coop' ? 'coop' : 'battle';
         config.started = true;
         startRound(config.mode, config.map);
       }
+    } else if (nextLobby === 'mega-server' && (joinRequest.mode === 'coop' || joinRequest.mode === 'battle') && config.mode !== joinRequest.mode) {
+      config.mode = joinRequest.mode;
+      config.map = randomMap();
+      startRound(config.mode, config.map);
     }
     moveToLobby(socket, current, nextLobby);
     socket.emit('init', {
@@ -735,7 +740,7 @@ function getWinningMap() {
 }
 
 function randomMap() {
-  const maps = ['hydro', 'arcade', 'citadel'];
+  const maps = ['hydro', 'hydro', 'hydro', 'arcade'];
   return maps[Math.floor(Math.random() * maps.length)];
 }
 

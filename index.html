@@ -1642,6 +1642,10 @@
       <div class="slot" data-weapon="smg">4 SMG</div>
       <div class="slot" data-weapon="dmr">5 DMR</div>
       <div class="slot" data-weapon="launcher">6 Launcher</div>
+      <div class="slot" data-weapon="handgun">7 Handgun</div>
+      <div class="slot" data-weapon="revolver">8 Revolver</div>
+      <div class="slot" data-weapon="deagle">9 Deagle</div>
+      <div class="slot" data-weapon="detonator">0 Detonator</div>
     </div>
     <div id="shopPanel">
       <strong>Shop</strong>
@@ -1649,7 +1653,10 @@
       <button data-buy="dmr">DMR</button>
       <button data-buy="shotgun">Shotgun</button>
       <button data-buy="sniper">Sniper</button>
-      <button data-buy="launcher">Launcher</button>
+      <button data-buy="launcher">RPG</button>
+      <button data-buy="revolver">Revolver</button>
+      <button data-buy="deagle">Deagle</button>
+      <button data-buy="detonator">Detonator</button>
     </div>
     <div id="roundPanel">
       <div id="roundTitle">Round Vote</div>
@@ -1770,7 +1777,19 @@
           </button>
           <button class="shopCard" data-buy="launcher" type="button">
             <div class="gunPreview launcher"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
-            <strong>Grenade Launcher</strong><small>Arc explosive shells into cover.</small><span class="shopPrice">800 credits</span>
+            <strong>Block RPG</strong><small>Direct rocket explosions.</small><span class="shopPrice">800 credits</span>
+          </button>
+          <button class="shopCard" data-buy="revolver" type="button">
+            <div class="gunPreview dmr"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Revolver</strong><small>Heavy secondary damage.</small><span class="shopPrice">225 credits</span>
+          </button>
+          <button class="shopCard" data-buy="deagle" type="button">
+            <div class="gunPreview sniper"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Desert Eagle</strong><small>Premium hand cannon.</small><span class="shopPrice">420 credits</span>
+          </button>
+          <button class="shopCard" data-buy="detonator" type="button">
+            <div class="gunPreview launcher"><span class="stock"></span><span class="body"></span><span class="barrel"></span><span class="mag"></span><span class="optic"></span></div>
+            <strong>Remote Detonator</strong><small>Place charges, then detonate.</small><span class="shopPrice">650 credits</span>
           </button>
         </div>
         <button id="joinButton">Save Profile</button>
@@ -1853,6 +1872,7 @@
     const arenaRoot = new THREE.Group();
     const remoteShotEffects = [];
     const grenades = [];
+    const remoteCharges = [];
     const explosions = [];
     const colliders = [];
     const climbZones = [];
@@ -1983,26 +2003,100 @@
         reloadTime: 1500,
       },
       launcher: {
-        label: 'Grenade Launcher',
-        damage: 85,
-        fireDelay: 1250,
+        label: 'Block RPG',
+        damage: 125,
+        fireDelay: 1450,
         automatic: false,
         spread: 0.006,
         pellets: 1,
-        recoil: 0.28,
-        range: 150,
+        recoil: 0.34,
+        range: 230,
         adsFov: 50,
         hipFov: 76,
         adsOffset: new THREE.Vector3(0.08, -0.3, -0.82),
         hipOffset: new THREE.Vector3(0.4, -0.4, -0.64),
         magazine: 1,
-        reserve: 8,
-        reloadTime: 1700,
+        reserve: 5,
+        reloadTime: 2100,
         explosive: true,
+        rocket: true,
+      },
+      handgun: {
+        label: 'Handgun',
+        damage: 21,
+        fireDelay: 210,
+        automatic: false,
+        spread: 0.018,
+        pellets: 1,
+        recoil: 0.055,
+        range: 100,
+        adsFov: 58,
+        hipFov: 76,
+        adsOffset: new THREE.Vector3(0.08, -0.28, -0.72),
+        hipOffset: new THREE.Vector3(0.28, -0.36, -0.58),
+        magazine: 15,
+        reserve: 60,
+        reloadTime: 980,
+        secondary: true,
+      },
+      revolver: {
+        label: 'Revolver',
+        damage: 45,
+        fireDelay: 420,
+        automatic: false,
+        spread: 0.012,
+        pellets: 1,
+        recoil: 0.12,
+        range: 125,
+        adsFov: 52,
+        hipFov: 76,
+        adsOffset: new THREE.Vector3(0.07, -0.27, -0.74),
+        hipOffset: new THREE.Vector3(0.3, -0.37, -0.6),
+        magazine: 6,
+        reserve: 36,
+        reloadTime: 1350,
+        secondary: true,
+      },
+      deagle: {
+        label: 'Desert Eagle',
+        damage: 58,
+        fireDelay: 520,
+        automatic: false,
+        spread: 0.01,
+        pellets: 1,
+        recoil: 0.16,
+        range: 140,
+        adsFov: 50,
+        hipFov: 76,
+        adsOffset: new THREE.Vector3(0.07, -0.27, -0.76),
+        hipOffset: new THREE.Vector3(0.31, -0.38, -0.62),
+        magazine: 7,
+        reserve: 35,
+        reloadTime: 1500,
+        secondary: true,
+      },
+      detonator: {
+        label: 'Remote Detonator',
+        damage: 105,
+        fireDelay: 520,
+        automatic: false,
+        spread: 0.01,
+        pellets: 1,
+        recoil: 0.1,
+        range: 80,
+        adsFov: 58,
+        hipFov: 76,
+        adsOffset: new THREE.Vector3(0.08, -0.28, -0.72),
+        hipOffset: new THREE.Vector3(0.28, -0.36, -0.58),
+        magazine: 2,
+        reserve: 6,
+        reloadTime: 1400,
+        explosive: true,
+        remote: true,
       },
     };
 
-    const weaponCosts = { assault: 0, smg: 150, shotgun: 250, dmr: 350, sniper: 500, launcher: 800 };
+    const weaponCosts = { assault: 0, handgun: 0, revolver: 225, deagle: 420, smg: 150, shotgun: 250, dmr: 350, sniper: 500, launcher: 800, detonator: 650 };
     const weaponSkins = {
       default: { label: 'Default', cost: 0, color: null },
       neon: { label: 'Neon Mint', cost: 220, color: '#45ffc8' },
@@ -2016,9 +2110,13 @@
       shotgun: 'Wide burst for tight fights.',
       dmr: 'Precise semi-auto hits.',
       sniper: 'Best scope and highest damage.',
-      launcher: 'Arc explosive shells into cover.',
+      launcher: 'Direct-fire RPG with a much stronger blast.',
+      handgun: 'Reliable starter sidearm.',
+      revolver: 'Slow, heavy secondary with chunky damage.',
+      deagle: 'Premium secondary hand cannon.',
+      detonator: 'Place charges, then shoot again to detonate them.',
     };
-    const profile = { username: '', credits: 0, owned: ['assault'], ownedSkins: ['default'], activeSkin: 'default', characterColor: '#59c3ff', characterStyle: 'classic', characterCosmetic: 'none' };
+    const profile = { username: '', credits: 0, owned: ['assault', 'handgun'], ownedSkins: ['default'], activeSkin: 'default', characterColor: '#59c3ff', characterStyle: 'classic', characterCosmetic: 'none' };
     let currentLobbyState = null;
     let gameStarted = false;
 
@@ -2033,6 +2131,10 @@
         smg: { current: weapons.smg.magazine, reserve: weapons.smg.reserve },
         dmr: { current: weapons.dmr.magazine, reserve: weapons.dmr.reserve },
         launcher: { current: weapons.launcher.magazine, reserve: weapons.launcher.reserve },
+        handgun: { current: weapons.handgun.magazine, reserve: weapons.handgun.reserve },
+        revolver: { current: weapons.revolver.magazine, reserve: weapons.revolver.reserve },
+        deagle: { current: weapons.deagle.magazine, reserve: weapons.deagle.reserve },
+        detonator: { current: weapons.detonator.magazine, reserve: weapons.detonator.reserve },
       },
       recoil: 0,
       muzzle: 0,
@@ -2251,6 +2353,10 @@
       weaponState.ammo.smg = { current: weapons.smg.magazine, reserve: weapons.smg.reserve };
       weaponState.ammo.dmr = { current: weapons.dmr.magazine, reserve: weapons.dmr.reserve };
       weaponState.ammo.launcher = { current: weapons.launcher.magazine, reserve: weapons.launcher.reserve };
+      weaponState.ammo.handgun = { current: weapons.handgun.magazine, reserve: weapons.handgun.reserve };
+      weaponState.ammo.revolver = { current: weapons.revolver.magazine, reserve: weapons.revolver.reserve };
+      weaponState.ammo.deagle = { current: weapons.deagle.magazine, reserve: weapons.deagle.reserve };
+      weaponState.ammo.detonator = { current: weapons.detonator.magazine, reserve: weapons.detonator.reserve };
       weaponState.reloadWeapon = null;
       weaponState.reloadingUntil = 0;
       updateAmmoDisplay();
@@ -2400,7 +2506,7 @@
     function loadProfile(name) {
       profile.username = String(name || '').trim().slice(0, 18) || 'Player';
       profile.credits = 0;
-      profile.owned = ['assault'];
+      profile.owned = ['assault', 'handgun'];
       profile.ownedSkins = ['default'];
       profile.activeSkin = 'default';
       profile.characterColor = '#59c3ff';
@@ -2409,14 +2515,14 @@
       try {
         const stored = JSON.parse(window.localStorage.getItem(profileKey()) || '{}');
         if (Number.isFinite(stored.credits)) profile.credits = Math.max(0, stored.credits);
-        if (Array.isArray(stored.owned)) profile.owned = Array.from(new Set(['assault', ...stored.owned.filter((weapon) => weapons[weapon])]));
+        if (Array.isArray(stored.owned)) profile.owned = Array.from(new Set(['assault', 'handgun', ...stored.owned.filter((weapon) => weapons[weapon])]));
         if (Array.isArray(stored.ownedSkins)) profile.ownedSkins = Array.from(new Set(['default', ...stored.ownedSkins.filter((skin) => weaponSkins[skin])]));
         if (stored.activeSkin && weaponSkins[stored.activeSkin]) profile.activeSkin = stored.activeSkin;
         if (typeof stored.characterColor === 'string' && /^#[0-9a-f]{6}$/i.test(stored.characterColor)) profile.characterColor = stored.characterColor;
         if (['classic', 'scout', 'heavy'].includes(stored.characterStyle)) profile.characterStyle = stored.characterStyle;
         if (['none', 'crown', 'horns', 'cape'].includes(stored.characterCosmetic)) profile.characterCosmetic = stored.characterCosmetic;
       } catch (error) {
-        profile.owned = ['assault'];
+        profile.owned = ['assault', 'handgun'];
       }
       localPlayer.color = profile.characterColor;
       updateProfileUi();
@@ -2555,7 +2661,7 @@
       previewCamera.lookAt(0, 1.25, 0);
       previewRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-      previewRenderer.setSize(ui.characterPreview.clientWidth, ui.characterPreview.clientHeight);
+      previewRenderer.setSize(Math.max(320, ui.characterPreview.clientWidth), Math.max(220, ui.characterPreview.clientHeight));
       ui.characterPreview.innerHTML = '';
       ui.characterPreview.appendChild(previewRenderer.domElement);
       previewScene.add(new THREE.HemisphereLight(0xd9ecff, 0x20262d, 2.4));
@@ -2592,8 +2698,10 @@
 
     function renderCharacterPreview() {
       if (!previewRenderer || !previewScene || !previewCamera || !previewRig) return;
-      previewRenderer.setSize(ui.characterPreview.clientWidth, ui.characterPreview.clientHeight, false);
-      previewCamera.aspect = ui.characterPreview.clientWidth / Math.max(1, ui.characterPreview.clientHeight);
+      const width = Math.max(320, ui.characterPreview.clientWidth);
+      const height = Math.max(220, ui.characterPreview.clientHeight);
+      previewRenderer.setSize(width, height, false);
+      previewCamera.aspect = width / height;
       previewCamera.updateProjectionMatrix();
       previewRig.rotation.y = previewYaw;
       previewRenderer.render(previewScene, previewCamera);
@@ -2634,11 +2742,15 @@
       mega.innerHTML = `<strong>Mega Portal</strong><span>Instant public match</span><small>Map changes randomly every round</small>`;
       const megaJoin = document.createElement('button');
       megaJoin.type = 'button';
-      megaJoin.textContent = 'Play Now';
+      megaJoin.textContent = 'Battle';
+      const megaCoop = document.createElement('button');
+      megaCoop.type = 'button';
+      megaCoop.textContent = 'Co-Op';
       mega.appendChild(megaJoin);
-      mega.addEventListener('click', () => {
+      mega.appendChild(megaCoop);
+      const joinMega = (mode = 'battle') => {
         gameStarted = true;
-        socket.emit('joinLobby', 'mega-server', (lobbyState) => {
+        socket.emit('joinLobby', { lobby: 'mega-server', mode }, (lobbyState) => {
           if (lobbyState) {
             renderLobbyMembers(lobbyState);
             ui.status.textContent = `Mega Portal - ${mapDisplayName(lobbyState.map)}`;
@@ -2646,39 +2758,35 @@
         });
         ui.loginOverlay.style.display = 'none';
         ui.notice.style.display = 'block';
-      });
+      };
+      megaJoin.addEventListener('click', (event) => { event.stopPropagation(); joinMega('battle'); });
+      megaCoop.addEventListener('click', (event) => { event.stopPropagation(); joinMega('coop'); });
+      mega.addEventListener('click', () => joinMega('battle'));
       ui.lobbyList.appendChild(mega);
-      for (let i = 0; i < 10; i++) {
-        const emptyPortal = !lobbies[i];
-        const lobby = lobbies[i] || { id: `portal-${i + 1}`, name: `Empty Portal ${i + 1}`, map: activeMap, playerCount: 0 };
+      if (!lobbies.length) {
+        const empty = document.createElement('div');
+        empty.className = 'lobbyEntry';
+        empty.innerHTML = '<span>No private lobbies yet. Press Create Lobby above to host one.</span>';
+        ui.lobbyList.appendChild(empty);
+        return;
+      }
+      for (const lobby of lobbies.slice(0, 8)) {
         const row = document.createElement('div');
-        row.className = `lobbyEntry portal${emptyPortal ? ' empty' : ''}`;
-        row.innerHTML = `<strong>${lobby.name}</strong><span>${lobby.playerCount} player${lobby.playerCount === 1 ? '' : 's'}</span><small>${emptyPortal ? 'Empty slot - create here' : mapDisplayName(lobby.map)}</small>`;
+        row.className = 'lobbyEntry portal';
+        row.innerHTML = `<strong>${lobby.name}</strong><span>${lobby.playerCount} player${lobby.playerCount === 1 ? '' : 's'}</span><small>${mapDisplayName(lobby.map)} - ${lobby.mode || 'battle'}</small>`;
         const join = document.createElement('button');
         join.type = 'button';
-        join.textContent = emptyPortal ? 'Create' : 'Join';
+        join.textContent = 'Join';
         join.addEventListener('click', (event) => {
           event.stopPropagation();
-          if (emptyPortal) {
-            socket.emit('createLobby', {
-              name: `${profile.username || 'Player'} Portal ${i + 1}`,
-              map: activeMap,
-              mode: localPlayer.vote || 'battle',
-              restricted: [],
-            }, (lobbyState) => {
-              renderLobbyMembers(lobbyState);
-              ui.lobbyStatus.textContent = `Created ${lobbyState.name}. You are host - invite friends, then Start Lobby.`;
-            });
-          } else {
-            socket.emit('joinLobby', lobby.id, (lobbyState) => {
-              if (lobbyState && lobbyState.error) {
-                ui.lobbyStatus.textContent = lobbyState.error;
-                return;
-              }
-              renderLobbyMembers(lobbyState);
-              ui.lobbyStatus.textContent = `Joined ${lobbyState.name}. Waiting for host to start.`;
-            });
-          }
+          socket.emit('joinLobby', lobby.id, (lobbyState) => {
+            if (lobbyState && lobbyState.error) {
+              ui.lobbyStatus.textContent = lobbyState.error;
+              return;
+            }
+            renderLobbyMembers(lobbyState);
+            ui.lobbyStatus.textContent = `Joined ${lobbyState.name}. Waiting for host to start.`;
+          });
         });
         row.addEventListener('click', () => join.click());
         row.appendChild(join);
@@ -3024,6 +3132,10 @@
       if (event.code === 'Digit4') setWeapon('smg');
       if (event.code === 'Digit5') setWeapon('dmr');
       if (event.code === 'Digit6') setWeapon('launcher');
+      if (event.code === 'Digit7') setWeapon('handgun');
+      if (event.code === 'Digit8') setWeapon('revolver');
+      if (event.code === 'Digit9') setWeapon('deagle');
+      if (event.code === 'Digit0') setWeapon('detonator');
       if (event.code === settings.keybinds.shoot) localPlayer.shooting = true;
       if (event.code === settings.keybinds.aim) weaponState.zooming = true;
       if (event.code === settings.keybinds.reload) reloadWeapon();
@@ -3335,8 +3447,8 @@
       addArena(forestFloor);
       addForestParticles();
 
-      const treeCount = settings.lowDetail ? 260 : 620;
-      const rockCount = settings.lowDetail ? 120 : 245;
+      const treeCount = settings.lowDetail ? 210 : 460;
+      const rockCount = settings.lowDetail ? 90 : 180;
       for (let i = 0; i < treeCount; i++) {
         const x = (rand() - 0.5) * 386;
         const z = (rand() - 0.5) * 386;
@@ -4798,6 +4910,7 @@
       const smg = name === 'smg';
       const dmr = name === 'dmr';
       const launcher = name === 'launcher';
+      const sidearm = weapons[name] && weapons[name].secondary;
       for (const part of [p.receiver, p.upper, p.handguard, p.stock, p.grip, p.magazine, p.rail, ...p.railSlots, p.triggerGuard, p.ejectionPort, p.chargingHandle, p.frontSight, p.rearSight, p.barrel, p.muzzleBrake, p.optic, p.opticGlass, p.sideModule, p.slingMount, p.foreGrip]) {
         part.visible = true;
       }
@@ -4813,16 +4926,16 @@
       p.rightSleeve.position.set(0.32, -0.23, 0.02);
       p.leftSleeve.rotation.set(0.25, 0.2, -0.38);
       p.rightSleeve.rotation.set(0.2, -0.2, 0.42);
-      p.handguard.scale.set(launcher ? 1.65 : shotgun ? 1.18 : sniper ? 0.82 : smg ? 0.72 : 1, launcher ? 1.55 : shotgun ? 1.18 : 1, launcher ? 1.22 : shotgun ? 0.82 : sniper ? 1.3 : smg ? 0.62 : dmr ? 1.18 : 1);
-      p.barrel.scale.set(launcher ? 2.8 : sniper ? 0.85 : shotgun ? 1.55 : smg ? 0.72 : 1, launcher ? 2.8 : sniper ? 0.85 : shotgun ? 1.55 : smg ? 0.72 : 1, launcher ? 0.78 : sniper ? 1.42 : shotgun ? 0.74 : smg ? 0.62 : dmr ? 1.2 : 1);
-      p.barrel.position.z = launcher ? -0.95 : sniper ? -1.28 : shotgun ? -0.98 : smg ? -0.82 : -1.1;
-      p.muzzleBrake.scale.set(launcher ? 2.6 : shotgun ? 1.72 : sniper ? 0.95 : smg ? 0.82 : 1, launcher ? 2.6 : shotgun ? 1.72 : sniper ? 0.95 : smg ? 0.82 : 1, launcher ? 1.1 : shotgun ? 0.75 : 1);
-      p.muzzleBrake.position.z = launcher ? -1.38 : sniper ? -1.78 : shotgun ? -1.36 : smg ? -1.18 : -1.55;
-      p.magazine.scale.set(launcher ? 1.35 : shotgun ? 0.72 : sniper ? 0.62 : smg ? 0.82 : 1, launcher ? 0.65 : shotgun ? 0.5 : sniper ? 0.72 : smg ? 1.3 : 1, shotgun ? 1.45 : 1);
-      p.optic.scale.set(sniper ? 1.52 : dmr ? 1.18 : shotgun || launcher ? 0.74 : smg ? 0.68 : 1, sniper ? 1.52 : dmr ? 1.18 : shotgun || launcher ? 0.74 : smg ? 0.68 : 1, sniper ? 1.75 : dmr ? 1.25 : shotgun || launcher ? 0.72 : smg ? 0.66 : 1);
+      p.handguard.scale.set(sidearm ? 0.5 : launcher ? 1.85 : shotgun ? 1.18 : sniper ? 0.82 : smg ? 0.72 : 1, sidearm ? 0.72 : launcher ? 1.65 : shotgun ? 1.18 : 1, sidearm ? 0.48 : launcher ? 1.22 : shotgun ? 0.82 : sniper ? 1.3 : smg ? 0.62 : dmr ? 1.18 : 1);
+      p.barrel.scale.set(sidearm ? 0.68 : launcher ? 3.2 : sniper ? 0.85 : shotgun ? 1.55 : smg ? 0.72 : 1, sidearm ? 0.68 : launcher ? 3.2 : sniper ? 0.85 : shotgun ? 1.55 : smg ? 0.72 : 1, sidearm ? 0.44 : launcher ? 0.96 : sniper ? 1.42 : shotgun ? 0.74 : smg ? 0.62 : dmr ? 1.2 : 1);
+      p.barrel.position.z = sidearm ? -0.72 : launcher ? -1.02 : sniper ? -1.28 : shotgun ? -0.98 : smg ? -0.82 : -1.1;
+      p.muzzleBrake.scale.set(sidearm ? 0.72 : launcher ? 2.9 : shotgun ? 1.72 : sniper ? 0.95 : smg ? 0.82 : 1, sidearm ? 0.72 : launcher ? 2.9 : shotgun ? 1.72 : sniper ? 0.95 : smg ? 0.82 : 1, sidearm ? 0.55 : launcher ? 1.24 : shotgun ? 0.75 : 1);
+      p.muzzleBrake.position.z = sidearm ? -1.02 : launcher ? -1.52 : sniper ? -1.78 : shotgun ? -1.36 : smg ? -1.18 : -1.55;
+      p.magazine.scale.set(sidearm ? 0.62 : launcher ? 1.35 : shotgun ? 0.72 : sniper ? 0.62 : smg ? 0.82 : 1, sidearm ? 0.78 : launcher ? 0.65 : shotgun ? 0.5 : sniper ? 0.72 : smg ? 1.3 : 1, sidearm ? 0.55 : shotgun ? 1.45 : 1);
+      p.optic.scale.set(sniper ? 1.52 : dmr ? 1.18 : shotgun || launcher || sidearm ? 0.74 : smg ? 0.68 : 1, sniper ? 1.52 : dmr ? 1.18 : shotgun || launcher || sidearm ? 0.74 : smg ? 0.68 : 1, sniper ? 1.75 : dmr ? 1.25 : shotgun || launcher || sidearm ? 0.72 : smg ? 0.66 : 1);
       p.optic.position.y = sniper ? 0.38 : 0.34;
       p.stock.scale.set(sniper || dmr ? 1.18 : shotgun ? 0.92 : smg ? 0.72 : 1, 1, sniper || dmr ? 1.25 : shotgun ? 0.8 : smg ? 0.62 : 1);
-      p.sideModule.visible = !sniper && !launcher;
+      p.sideModule.visible = !sniper && !launcher && !sidearm;
       tintLocalWeapon();
     }
 
@@ -4888,7 +5001,7 @@
       group.add(body, band);
       group.position.copy(origin);
       scene.add(group);
-      return { mesh: group, velocity, life: 2.35, local, ownerId };
+      return { mesh: group, velocity, life: 2.35, local, ownerId, radius: 7, damage: 85 };
     }
 
     function animate() {
@@ -5133,10 +5246,25 @@
       const origin = camera.getWorldPosition(new THREE.Vector3());
       camera.getWorldDirection(mouseDirection);
       if (weapon.explosive) {
-        const velocity = mouseDirection.clone().multiplyScalar(28);
-        velocity.y += 3.8;
+        if (weapon.remote && remoteCharges.length > 0) {
+          if (ammoState && ammoState.current !== Infinity) {
+            ammoState.current = Math.min(weapon.magazine, ammoState.current + 1);
+            updateAmmoDisplay();
+          }
+          for (const charge of remoteCharges.splice(0)) {
+            charge.life = 0;
+            charge.radius = 8.5;
+            charge.damage = 120;
+          }
+          return;
+        }
+        const velocity = mouseDirection.clone().multiplyScalar(weapon.rocket ? 48 : 28);
+        if (!weapon.rocket) velocity.y += 3.8;
         const grenade = createGrenade(origin.clone().add(mouseDirection.clone().multiplyScalar(1.2)), velocity, true, localPlayer.id);
-        grenade.life = 1.35;
+        grenade.life = weapon.remote ? 999 : weapon.rocket ? 2.2 : 1.35;
+        grenade.radius = weapon.remote ? 8.5 : weapon.rocket ? 10.5 : 7;
+        grenade.damage = weapon.remote ? 120 : weapon.rocket ? 145 : 85;
+        if (weapon.remote) remoteCharges.push(grenade);
         grenades.push(grenade);
         socket.emit('grenade', { origin: vec(grenade.mesh.position), velocity: vec(velocity) });
         socket.emit('shoot', { weapon: localPlayer.weapon, origin: vec(origin), direction: vec(mouseDirection), spread: weapon.spread, pelletCount: 1 });
@@ -5170,6 +5298,18 @@
             dealt += weapon.damage;
             socket.emit('hitZombie', { zombieId: first.object.userData.zombieId, damage: weapon.damage });
           }
+        } else {
+          const forgivingPlayer = findForgivingHit(origin, dir, weapon.range, playerMeshes, 0.72);
+          const forgivingZombie = findForgivingHit(origin, dir, weapon.range, zombies, 0.82);
+          if (forgivingPlayer) {
+            spawnHitMarker(forgivingPlayer.point, 0xff5252);
+            hits.push(forgivingPlayer.id);
+            dealt += weapon.damage;
+          } else if (forgivingZombie) {
+            spawnHitMarker(forgivingZombie.point, 0xffd36e);
+            dealt += weapon.damage;
+            socket.emit('hitZombie', { zombieId: forgivingZombie.id, damage: weapon.damage });
+          }
         }
       }
 
@@ -5187,6 +5327,21 @@
         spread: weapon.spread,
         pelletCount: weapon.pellets,
       });
+    }
+
+    function findForgivingHit(origin, direction, range, rigs, radius) {
+      let best = null;
+      for (const [id, rig] of rigs) {
+        const center = rig.root.position.clone();
+        center.y += rig.head ? 1.35 : 0.9;
+        const toCenter = center.clone().sub(origin);
+        const distanceAlong = toCenter.dot(direction);
+        if (distanceAlong < 0 || distanceAlong > range) continue;
+        const closest = origin.clone().addScaledVector(direction, distanceAlong);
+        const miss = closest.distanceTo(center);
+        if (miss <= radius && (!best || distanceAlong < best.distance)) best = { id, point: closest, distance: distanceAlong };
+      }
+      return best;
     }
 
     function updateRemotePlayers(delta) {
@@ -5494,16 +5649,20 @@
 
       for (const [id, rig] of playerMeshes) {
         const distance = rig.root.position.distanceTo(position);
-        if (grenade.local && distance < 7) {
-          const damage = Math.round((1 - distance / 7) * 85);
+        const radius = grenade.radius || 7;
+        const maxDamage = grenade.damage || 85;
+        if (grenade.local && distance < radius) {
+          const damage = Math.round((1 - distance / radius) * maxDamage);
           showDamageNumber(damage);
           socket.emit('hit', { targetId: id, damage, weapon: 'grenade' });
         }
       }
       for (const [id, rig] of zombies) {
         const distance = rig.root.position.distanceTo(position);
-        if (grenade.local && distance < 8.5) {
-          const damage = Math.round((1 - distance / 8.5) * 120);
+        const radius = (grenade.radius || 7) + 1.5;
+        const maxDamage = (grenade.damage || 85) + 35;
+        if (grenade.local && distance < radius) {
+          const damage = Math.round((1 - distance / radius) * maxDamage);
           showDamageNumber(damage);
           socket.emit('hitZombie', { zombieId: id, damage });
         }
@@ -5540,8 +5699,9 @@
       weaponModel.group.rotation.y = -0.08 + weaponState.adsAmount * 0.08 + bobX * 0.7 + meleeSwing * 0.4 - reloadWave * 0.28;
       weaponModel.group.rotation.z = (localPlayer.sliding ? -0.08 : 0) + Math.sin(localPlayer.bob) * 0.025 * moveAmount + meleeSwing * 0.45 + reloadWave * 0.24;
       weaponModel.parts.magazine.position.y = -0.28 - reloadWave * 0.22;
-      weaponModel.parts.barrel.position.z = (localPlayer.weapon === 'sniper' ? -1.28 : localPlayer.weapon === 'shotgun' ? -0.98 : -1.1) + weaponState.muzzle * 0.04;
-      weaponModel.parts.muzzleBrake.position.z = (localPlayer.weapon === 'sniper' ? -1.78 : localPlayer.weapon === 'shotgun' ? -1.36 : -1.55) + weaponState.muzzle * 0.06;
+      const sidearm = weapons[localPlayer.weapon]?.secondary;
+      weaponModel.parts.barrel.position.z = (sidearm ? -0.72 : localPlayer.weapon === 'launcher' ? -1.02 : localPlayer.weapon === 'sniper' ? -1.28 : localPlayer.weapon === 'shotgun' ? -0.98 : -1.1) + weaponState.muzzle * 0.04;
+      weaponModel.parts.muzzleBrake.position.z = (sidearm ? -1.02 : localPlayer.weapon === 'launcher' ? -1.52 : localPlayer.weapon === 'sniper' ? -1.78 : localPlayer.weapon === 'shotgun' ? -1.36 : -1.55) + weaponState.muzzle * 0.06;
       weaponModel.flash.intensity = weaponState.muzzle * 10;
       weaponModel.cone.material.opacity = weaponState.muzzle * 0.86;
 

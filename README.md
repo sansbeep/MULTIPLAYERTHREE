@@ -154,3 +154,14 @@ npm start
 - Reworked Trigger Ship into Trigger Shipwreck with broken decks, rubble, lower galley floors, torn sails, deadly water, and more cover.
 - Added climbable ladders to Trigger Forest watchtowers.
 - Improved perceived multiplayer smoothness with faster client sends, volatile movement packets, and stronger interpolation.
+
+### v1.8 - Feedback Combat and Lobby Repair
+- Increased forgiving hit detection around players and zombies so bullets connect more reliably.
+- Simplified lobby browsing by removing empty portal slots and showing only Mega Portal plus real joinable lobbies.
+- Added separate Mega Portal Battle and Co-Op entry buttons so Co-Op can start in Mega Server.
+- Added a secondary weapon class with Handgun, Revolver, and Desert Eagle.
+- Reworked Grenade Launcher into Block RPG with faster direct rockets and stronger blast damage.
+- Added Remote Detonator explosives that place charges and detonate them on the next trigger pull.
+- Reduced Forest object counts from the previous dense pass to improve performance while keeping it full.
+- Weighted random public map selection toward Trigger Forest while Dungeon and Shipwreck continue being improved.
+- Fixed hidden-size inventory rendering so the 3D character inspector has a usable canvas size.
